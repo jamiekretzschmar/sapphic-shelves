@@ -121,7 +121,8 @@ export default function SearchNovels() {
     });
     try {
       updateTask(taskId, { progress: 30 });
-      const res = await searchForNovels("Recommend 10 most popular and highly rated sapphic novels of all time across different genres. Focus on books with high visibility and positive reviews.");
+      // Updated the prompt on the line below to strictly request contemporary romance
+      const res = await searchForNovels("Recommend 10 most popular and highly rated sapphic contemporary romance novels. Focus on books with high visibility and positive reviews.");
       setPopularBooks(res);
       updateTask(taskId, { status: 'completed', progress: 100 });
     } catch (err) {
