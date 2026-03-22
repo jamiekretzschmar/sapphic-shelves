@@ -569,6 +569,46 @@ export default function Library() {
             <button onClick={handleBulkEnrich} className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><ImageIcon className="w-3 h-3"/> Auto-Enrich</button>
             <button onClick={handleBulkDelete} className="text-xs bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><Trash2 className="w-3 h-3"/> Delete</button>
           </div>
+          <div className="flex gap-2 flex-wrap border-l border-white/10 pl-4">
+            <select
+              className="bg-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
+              onChange={(e) => {
+                const tagId = e.target.value;
+                if (!tagId) return;
+                selectedBooks.forEach(bookId => {
+                  const book = books.find(b => b.id === bookId);
+                  if (book && !book.tags.includes(tagId)) {
+                    updateBook(bookId, { tags: [...book.tags, tagId] });
+                  }
+                });
+                setSelectedBooks(new Set());
+                e.target.value = "";
+              }}
+              defaultValue=""
+            >
+              <option value="" disabled>+ Add tag...</option>
+              {tags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+            <select
+              className="bg-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
+              onChange={(e) => {
+                const tagId = e.target.value;
+                if (!tagId) return;
+                selectedBooks.forEach(bookId => {
+                  const book = books.find(b => b.id === bookId);
+                  if (book) {
+                    updateBook(bookId, { tags: book.tags.filter(id => id !== tagId) });
+                  }
+                });
+                setSelectedBooks(new Set());
+                e.target.value = "";
+              }}
+              defaultValue=""
+            >
+              <option value="" disabled>- Remove tag...</option>
+              {tags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
         </div>
       )}
 
@@ -740,6 +780,17 @@ export default function Library() {
                               </button>
                             </div>
                           )}
+                        </div>
+
+                        {/* Notes */}
+                        <div>
+                          <h5 className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider mb-2">Notes</h5>
+                          <textarea
+                            value={book.notes || ''}
+                            onChange={(e) => updateBook(book.id, { notes: e.target.value })}
+                            placeholder="Add your notes here..."
+                            className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 focus:outline-none focus:border-fuchsia-500/50 min-h-[80px]"
+                          />
                         </div>
 
                         {/* Tags */}

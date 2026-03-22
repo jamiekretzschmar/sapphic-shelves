@@ -58,7 +58,7 @@ export default function CommandPalette({
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Type a command or search..."
-            className="flex-1 bg-transparent text-slate-200 placeholder:text-slate-500 focus:outline-none"
+            className="flex-1 bg-transparent text-slate-100 placeholder:text-slate-400 focus:outline-none"
             onKeyDown={e => {
               if (e.key === 'Escape') onClose();
               if (e.key === 'Enter' && filteredActions.length > 0) {

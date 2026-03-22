@@ -54,7 +54,7 @@ function AppContent() {
             <div className="p-2.5 bg-white/50 rounded-2xl shadow-sm border border-white/60">
               <BookOpen className="w-6 h-6" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-800">Sapphic Shelves</h1>
+            <h1 className="text-xl font-bold tracking-tight text-slate-100">Sapphic Shelves</h1>
           </div>
           <button 
             onClick={() => setIsCmdPaletteOpen(true)}

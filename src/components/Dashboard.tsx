@@ -27,7 +27,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-100 flex items-center gap-3">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
           <BarChart3 className="w-8 h-8 text-amber-400" />
           Reading Analytics
         </h2>

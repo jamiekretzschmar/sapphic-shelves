@@ -11,9 +11,10 @@ interface SortableTagItemProps {
   onSelect: (id: string) => void; editName: string; editCategory: TagCategory;
   setEditName: (name: string) => void; setEditCategory: (cat: TagCategory) => void;
   saveEdit: () => void; cancelEdit: () => void; startEdit: (id: string, name: string, category: TagCategory) => void; handleDelete: (id: string) => void;
+  onViewBooks: (id: string) => void;
 }
 
-function SortableTagItem({ tag, usageCount, isEditing, isSelected, onSelect, editName, editCategory, setEditName, setEditCategory, saveEdit, cancelEdit, startEdit, handleDelete }: SortableTagItemProps) {
+function SortableTagItem({ tag, usageCount, isEditing, isSelected, onSelect, editName, editCategory, setEditName, setEditCategory, saveEdit, cancelEdit, startEdit, handleDelete, onViewBooks }: SortableTagItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: tag.id });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 50 : 1 };
   const categories: TagCategory[] = ['Genre', 'Trope', 'Setting', 'Vibe', 'Other'];
@@ -24,7 +25,7 @@ function SortableTagItem({ tag, usageCount, isEditing, isSelected, onSelect, edi
         <div className="flex items-center gap-3 flex-1">
           {!isEditing && (
             <div className="flex items-center gap-2">
-              <button onClick={() => onSelect(tag.id)} className={`p-1 rounded-md transition-colors ${isSelected ? 'text-emerald-500' : 'text-slate-500 hover:text-slate-400'}`}>
+              <button onClick={() => onSelect(tag.id)} className={`p-1 rounded-md transition-colors ${isSelected ? 'text-emerald-300' : 'text-slate-500 hover:text-slate-400'}`}>
                 {isSelected ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
               </button>
               <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 text-slate-500 hover:text-slate-400">
@@ -45,10 +46,10 @@ function SortableTagItem({ tag, usageCount, isEditing, isSelected, onSelect, edi
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3 flex-1 cursor-pointer group/tag py-1" onClick={() => startEdit(tag.id, tag.name, tag.category || 'Other')}>
+        <div className="flex items-center gap-3 flex-1 cursor-pointer group/tag py-1" onClick={() => onViewBooks(tag.id)}>
               <Hash className="w-5 h-5 text-slate-500 group-hover/tag:text-fuchsia-400 transition-colors" />
               <div className="flex flex-col">
-                <span className="font-bold text-slate-300 group-hover/tag:text-fuchsia-400 transition-colors">{tag.name}</span>
+                <span className="font-bold text-slate-100 group-hover/tag:text-fuchsia-400 transition-colors">{tag.name}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider">{tag.category || 'Other'}</span>
                   {tag.lastUsed && <span className="text-[9px] text-slate-500 flex items-center gap-1"><Clock className="w-2.5 h-2.5" /> {new Date(tag.lastUsed).toLocaleDateString()}</span>}
@@ -84,6 +85,8 @@ export default function Lexicon() {
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
   const [bulkCategory, setBulkCategory] = useState<TagCategory | ''>('');
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  const [selectedTagForBooks, setSelectedTagForBooks] = useState<string | null>(null);
 
   const categories: TagCategory[] = ['Genre', 'Trope', 'Setting', 'Vibe', 'Other'];
   const tabs = ['All', 'Recent', ...categories];
@@ -267,7 +270,7 @@ export default function Lexicon() {
 
                 return (
                   <motion.div key={tag.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
-                    <SortableTagItem tag={tag} usageCount={usageCount} isEditing={isEditing} isSelected={isSelected} onSelect={toggleSelectTag} editName={editName} editCategory={editCategory} setEditName={setEditName} setEditCategory={setEditCategory} saveEdit={saveEdit} cancelEdit={cancelEdit} startEdit={startEdit} handleDelete={confirmDelete} />
+                    <SortableTagItem tag={tag} usageCount={usageCount} isEditing={isEditing} isSelected={isSelected} onSelect={toggleSelectTag} editName={editName} editCategory={editCategory} setEditName={setEditName} setEditCategory={setEditCategory} saveEdit={saveEdit} cancelEdit={cancelEdit} startEdit={startEdit} handleDelete={confirmDelete} onViewBooks={setSelectedTagForBooks} />
                   </motion.div>
                 );
               })}
@@ -321,7 +324,30 @@ export default function Lexicon() {
           </div>
         )}
       </AnimatePresence>
+
+      {selectedTagForBooks && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-950 rounded-3xl p-6 max-w-2xl w-full shadow-2xl border border-slate-800 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-100">Books tagged with "{tags.find(t => t.id === selectedTagForBooks)?.name}"</h3>
+              <button onClick={() => setSelectedTagForBooks(null)} className="p-2 text-slate-400 hover:text-slate-200 transition-colors"><X className="w-6 h-6" /></button>
+            </div>
+            <div className="grid gap-4">
+              {books.filter(b => b.tags.includes(selectedTagForBooks)).map(book => (
+                <div key={book.id} className="flex items-center gap-4 p-4 bg-slate-900 rounded-2xl border border-slate-800">
+                  <div className="w-16 h-24 bg-slate-800 rounded-lg overflow-hidden shrink-0">
+                    {book.coverUrl && <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-200">{book.title}</h4>
+                    <p className="text-sm text-slate-400">{book.author}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
-
