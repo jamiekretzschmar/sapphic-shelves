@@ -3,7 +3,7 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --color-ocean: #4A5568;
-  --color-maroon: #800000;
+  --color-maroon: #660000;
   --color-rock: #718096;
   --color-olive: #6b8e23;
   --color-earth-bg: var(--bg-color);
@@ -48,7 +48,7 @@
 :root {
   /* Ocean Grey Light Mode - Softer background */
   --bg-color: #f8f9fa;
-  --text-color: #1e293b;
+  --text-color: #f1f5f9;
   --slate-950: #ffffff;
   --slate-900: #f1f5f9;
   --slate-800: #e2e8f0;
@@ -84,9 +84,9 @@
   --amber-600: #152b4a;
   
   /* Maroon mapped to rose */
-  --rose-300: #b36b6b;
-  --rose-400: #994d4d;
-  --rose-500: #800000;
+  --rose-300: #a94c4c;
+  --rose-400: #924444;
+  --rose-500: #6d3636;
   --rose-600: #660000;
 }
 
