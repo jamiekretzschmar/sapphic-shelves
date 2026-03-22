@@ -43,51 +43,41 @@
   --color-rose-400: var(--rose-400);
   --color-rose-500: var(--rose-500);
   --color-rose-600: var(--rose-600);
-}
+} 
 
 :root {
-  /* Ocean Grey Light Mode - Softer background */
-  --bg-color: #f8f9fa;
-  --text-color: #f1f5f9;
-  --slate-950: #ffffff;
-  --slate-900: #f1f5f9;
-  --slate-800: #e2e8f0;
-  --slate-700: #cbd5e0;
-  --slate-100: #1e293b;
-  --slate-200: #334155;
-  --slate-300: #475569;
-  --slate-400: #64748b;
-  --slate-500: #94a3b8;
+  /* Warm Light Mode - Custom Palettes */
+  --bg-color: #fffaf5;
+  --text-color: #38367d;
+
+  /* UI Surfaces (Inverted Scale: 950 is lightest, 100 is darkest) */
+  --slate-950: #ffffff;      /* Card Backgrounds */
+  --slate-900: #fcf8f2;      /* Hover Backgrounds */
+  --slate-800: #e8dcc4;      /* Borders / Dividers */
+  --slate-700: #d1e5d5;      /* Subtle Background Accents */
+  --slate-500: #b58b72;      /* Muted Icons / Minor Text */
+  --slate-400: #8c6b5d;      /* Secondary Text */
+  --slate-300: #5e516c;      /* Body Text (Muted Purple) */
+  --slate-200: #60758d;      /* Subheadings (Blue-Gray) */
+  --slate-100: #38367d;      /* Primary Headings (Deep Navy) */
+
+  /* Vibrant Accents */
+  --fuchsia-400: #e8be61;    /* Primary Gold/Warm */
+  --fuchsia-500: #d5c673;    
   
-  /* Gold/Tan (#b6a16f) mapped to fuchsia */
-  --fuchsia-300: #d4c8a9;
-  --fuchsia-400: #c5b48c;
-  --fuchsia-500: #b6a16f;
-  --fuchsia-600: #928159;
+  --emerald-400: #7bcabb;    /* Mint */
+  --emerald-500: #588157;
   
-  /* Olive mapped to emerald */
-  --emerald-300: #a3b18a;
-  --emerald-400: #8a9a5b;
-  --emerald-500: #6b8e23;
-  --emerald-600: #556b2f;
-  
-  /* Cornflower Blue (#6282c9) mapped to blue */
-  --blue-300: #a0b4e1;
   --blue-400: #819bd5;
-  --blue-500: #6282c9;
-  --blue-600: #4e68a1;
+  --blue-500: #165f99;       /* Deep Blue */
   
-  /* Navy Blue mapped to amber */
-  --amber-300: #4a6fa5;
-  --amber-400: #2c5282;
-  --amber-500: #1a365d;
-  --amber-600: #152b4a;
+  --amber-400: #f5cb62;      /* Bright Yellow */
+  --amber-500: #cc6155;      /* Coral */
   
-  /* Maroon mapped to rose */
-  --rose-300: #a94c4c;
-  --rose-400: #924444;
-  --rose-500: #6d3636;
-  --rose-600: #660000;
+  --rose-400: #cc6155;       /* Coral/Red */
+  --rose-500: #b34a4a;       /* Muted Red */
+}
+
 }
 
 .dark {

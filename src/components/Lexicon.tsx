@@ -20,14 +20,14 @@ function SortableTagItem({ tag, usageCount, isEditing, isSelected, onSelect, edi
 
   return (
     <div ref={setNodeRef} style={style} className={`${isDragging ? 'opacity-0' : ''}`}>
-      <motion.div layout className={`flex items-center justify-between p-4 rounded-3xl border transition-all shadow-sm ${isSelected ? 'bg-[#d1e5d5] border-[#a3c2ac]' : 'bg-white border-[#e8dcc4] hover:border-[#e8be61]'}`}>
+      <motion.div layout className={`flex items-center justify-between p-4 rounded-3xl border transition-all shadow-sm ${isSelected ? 'bg-emerald-400/10 border-emerald-400/50' : 'bg-slate-950 border-slate-800 hover:border-fuchsia-400'}`}>
         <div className="flex items-center gap-3 flex-1">
           {!isEditing && (
             <div className="flex items-center gap-2">
-              <button onClick={() => onSelect(tag.id)} className={`p-1 rounded-md transition-colors ${isSelected ? 'text-[#2d4a36]' : 'text-[#b58b72] hover:text-[#8c6b5d]'}`}>
+              <button onClick={() => onSelect(tag.id)} className={`p-1 rounded-md transition-colors ${isSelected ? 'text-emerald-500' : 'text-slate-500 hover:text-slate-400'}`}>
                 {isSelected ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
               </button>
-              <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 text-[#b58b72] hover:text-[#8c6b5d]">
+              <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 text-slate-500 hover:text-slate-400">
                 <GripVertical className="w-5 h-5" />
               </div>
             </div>
@@ -35,26 +35,26 @@ function SortableTagItem({ tag, usageCount, isEditing, isSelected, onSelect, edi
           
           {isEditing ? (
             <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center gap-3 mr-4">
-              <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 w-full bg-[#fffaf5] border border-[#e8dcc4] rounded-xl px-3 py-2 text-[#7d685c] focus:outline-none focus:border-[#e8be61]" autoFocus onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit(); }} />
-              <select value={editCategory} onChange={e => setEditCategory(e.target.value as TagCategory)} className="bg-[#fffaf5] border border-[#e8dcc4] rounded-xl px-3 py-2 text-[#7d685c] focus:outline-none focus:border-[#e8be61]">
+              <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-fuchsia-400" autoFocus onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit(); }} />
+              <select value={editCategory} onChange={e => setEditCategory(e.target.value as TagCategory)} className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-fuchsia-400">
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
               <div className="flex items-center gap-2">
-                <button onClick={saveEdit} className="p-2 text-[#2d4a36] hover:bg-[#d1e5d5] rounded-xl transition-colors"><Save className="w-5 h-5" /></button>
-                <button onClick={cancelEdit} className="p-2 text-[#a85a5a] hover:bg-[#fce4e4] rounded-xl transition-colors"><X className="w-5 h-5" /></button>
+                <button onClick={saveEdit} className="p-2 text-emerald-500 hover:bg-emerald-400/20 rounded-xl transition-colors"><Save className="w-5 h-5" /></button>
+                <button onClick={cancelEdit} className="p-2 text-rose-500 hover:bg-rose-400/20 rounded-xl transition-colors"><X className="w-5 h-5" /></button>
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-3 flex-1 cursor-pointer group/tag py-1" onClick={() => startEdit(tag.id, tag.name, tag.category || 'Other')}>
-              <Hash className="w-5 h-5 text-[#b58b72] group-hover/tag:text-[#e8be61] transition-colors" />
+              <Hash className="w-5 h-5 text-slate-500 group-hover/tag:text-fuchsia-400 transition-colors" />
               <div className="flex flex-col">
-                <span className="font-bold text-[#7d685c] group-hover/tag:text-[#e8be61] transition-colors">{tag.name}</span>
+                <span className="font-bold text-slate-300 group-hover/tag:text-fuchsia-400 transition-colors">{tag.name}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-[#b58b72] uppercase tracking-wider">{tag.category || 'Other'}</span>
-                  {tag.lastUsed && <span className="text-[9px] text-[#b58b72] flex items-center gap-1"><Clock className="w-2.5 h-2.5" /> {new Date(tag.lastUsed).toLocaleDateString()}</span>}
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">{tag.category || 'Other'}</span>
+                  {tag.lastUsed && <span className="text-[9px] text-slate-500 flex items-center gap-1"><Clock className="w-2.5 h-2.5" /> {new Date(tag.lastUsed).toLocaleDateString()}</span>}
                 </div>
               </div>
-              <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-[#b58b72] bg-[#fcf8f2] px-2 py-0.5 rounded-full border border-[#e8dcc4]">
+              <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-900 px-2 py-0.5 rounded-full border border-slate-800">
                 {usageCount} book{usageCount !== 1 ? 's' : ''}
               </span>
             </div>
@@ -63,8 +63,8 @@ function SortableTagItem({ tag, usageCount, isEditing, isSelected, onSelect, edi
 
         {!isEditing && (
           <div className="flex items-center gap-2">
-            <button onClick={() => startEdit(tag.id, tag.name, tag.category || 'Other')} className="p-3 text-[#b58b72] hover:text-[#e8be61] hover:bg-[#fcf8f2] rounded-xl transition-colors" title="Rename Tag"><Edit2 className="w-5 h-5" /></button>
-            <button onClick={() => handleDelete(tag.id)} className="p-3 text-[#b58b72] hover:text-[#a85a5a] hover:bg-[#fce4e4] rounded-xl transition-colors"><Trash2 className="w-5 h-5" /></button>
+            <button onClick={() => startEdit(tag.id, tag.name, tag.category || 'Other')} className="p-3 text-slate-500 hover:text-fuchsia-400 hover:bg-slate-900 rounded-xl transition-colors" title="Rename Tag"><Edit2 className="w-5 h-5" /></button>
+            <button onClick={() => handleDelete(tag.id)} className="p-3 text-slate-500 hover:text-rose-500 hover:bg-rose-400/20 rounded-xl transition-colors"><Trash2 className="w-5 h-5" /></button>
           </div>
         )}
       </motion.div>
@@ -194,24 +194,24 @@ export default function Lexicon() {
   return (
     <div className="space-y-8 max-w-3xl mx-auto pb-20">
       <div className="text-center space-y-4 mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#fcf8f2] text-[#e8be61] mb-4 shadow-sm border border-[#e8dcc4]">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-900 text-fuchsia-400 mb-4 shadow-sm border border-slate-800">
           <Hash className="w-8 h-8" />
         </div>
-        <h2 className="text-3xl font-bold tracking-tight text-[#8c6b5d]">The Lexicon</h2>
-        <p className="text-[#b58b72] max-w-xl mx-auto">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-100">The Lexicon</h2>
+        <p className="text-slate-400 max-w-xl mx-auto">
           Manage your global tagging system. Categorize your books with custom tropes, themes, or reading statuses.
         </p>
       </div>
 
-      <div className="bg-[#fffaf5] border border-[#e8dcc4] rounded-3xl p-4 shadow-sm relative overflow-hidden">
+      <div className="bg-slate-950 border border-slate-800 rounded-3xl p-4 shadow-sm relative overflow-hidden">
         <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3 relative z-10">
           <div className="flex-1 flex gap-2">
-            <input type="text" placeholder="Add a new tag (e.g., 'Enemies to Lovers')" value={newTag} onChange={e => setNewTag(e.target.value)} className="flex-1 bg-white border border-[#e8dcc4] rounded-xl px-4 py-3 text-[#7d685c] placeholder:text-[#b58b72] focus:outline-none focus:border-[#e8be61] shadow-sm" />
-            <select value={newTagCategory} onChange={e => setNewTagCategory(e.target.value as TagCategory)} className="bg-white border border-[#e8dcc4] rounded-xl px-4 py-3 text-[#7d685c] focus:outline-none focus:border-[#e8be61] shadow-sm w-32">
+            <input type="text" placeholder="Add a new tag (e.g., 'Enemies to Lovers')" value={newTag} onChange={e => setNewTag(e.target.value)} className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-300 placeholder:text-slate-500 focus:outline-none focus:border-fuchsia-400 shadow-sm" />
+            <select value={newTagCategory} onChange={e => setNewTagCategory(e.target.value as TagCategory)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-300 focus:outline-none focus:border-fuchsia-400 shadow-sm w-32">
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          <button type="submit" disabled={!newTag.trim()} className="bg-[#e8be61] hover:bg-[#d4ad58] disabled:opacity-50 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-md active:scale-95 whitespace-nowrap">
+          <button type="submit" disabled={!newTag.trim()} className="bg-fuchsia-400 hover:bg-fuchsia-500 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-md active:scale-95 whitespace-nowrap border border-fuchsia-500/20">
             <Plus className="w-5 h-5" /> Add Tag
           </button>
         </form>
@@ -219,29 +219,29 @@ export default function Lexicon() {
 
       <div className="flex flex-col gap-4">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#b58b72]" />
-          <input type="text" placeholder="Search tags by name..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-white border border-[#e8dcc4] rounded-2xl pl-12 pr-4 py-3 text-[#7d685c] placeholder:text-[#b58b72] focus:outline-none focus:border-[#e8be61] shadow-sm transition-all" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+          <input type="text" placeholder="Search tags by name..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-12 pr-4 py-3 text-slate-300 placeholder:text-slate-500 focus:outline-none focus:border-fuchsia-400 shadow-sm transition-all" />
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <button onClick={toggleSelectAll} className="text-xs font-bold uppercase tracking-widest text-[#b58b72] hover:text-[#e8be61] transition-colors flex items-center gap-2">
+            <button onClick={toggleSelectAll} className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-fuchsia-400 transition-colors flex items-center gap-2">
               {selectedTagIds.size === filteredTags.length && filteredTags.length > 0 ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
               {selectedTagIds.size === filteredTags.length && filteredTags.length > 0 ? 'Deselect All' : 'Select All'}
             </button>
-            {selectedTagIds.size > 0 && <span className="text-xs font-bold text-[#2d4a36] bg-[#d1e5d5] px-2 py-1 rounded-full">{selectedTagIds.size} Selected</span>}
+            {selectedTagIds.size > 0 && <span className="text-xs font-bold text-emerald-500 bg-emerald-400/20 border border-emerald-400/50 px-2 py-1 rounded-full">{selectedTagIds.size} Selected</span>}
           </div>
 
           {selectedTagIds.size > 0 && (
             <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="flex items-center gap-2 bg-white border border-[#e8dcc4] rounded-xl px-3 py-1.5 shadow-sm">
-                <FolderInput className="w-4 h-4 text-[#b58b72]" />
-                <select value={bulkCategory} onChange={e => handleBulkCategorize(e.target.value as TagCategory)} className="bg-transparent text-xs font-bold uppercase tracking-wider text-[#7d685c] focus:outline-none">
+              <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 shadow-sm">
+                <FolderInput className="w-4 h-4 text-slate-500" />
+                <select value={bulkCategory} onChange={e => handleBulkCategorize(e.target.value as TagCategory)} className="bg-transparent text-xs font-bold uppercase tracking-wider text-slate-300 focus:outline-none">
                   <option value="">Move to...</option>
                   {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-              <button onClick={handleBulkDelete} className="p-2 text-[#a85a5a] hover:bg-[#fce4e4] rounded-xl transition-colors shadow-sm bg-white border border-[#e8dcc4]" title="Delete Selected"><Trash2 className="w-5 h-5" /></button>
+              <button onClick={handleBulkDelete} className="p-2 text-rose-500 hover:bg-rose-400/20 rounded-xl transition-colors shadow-sm bg-slate-950 border border-slate-800" title="Delete Selected"><Trash2 className="w-5 h-5" /></button>
             </div>
           )}
         </div>
@@ -250,7 +250,7 @@ export default function Lexicon() {
       <div className="overflow-x-auto custom-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
         <div className="flex items-center gap-2 min-w-max">
           {tabs.map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab as any)} className={`px-5 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all border ${activeTab === tab ? 'bg-[#e8be61] text-white border-[#e8be61] shadow-md' : 'bg-white text-[#b58b72] border-[#e8dcc4] hover:bg-[#fcf8f2]'}`}>
+            <button key={tab} onClick={() => setActiveTab(tab as any)} className={`px-5 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all border ${activeTab === tab ? 'bg-fuchsia-400 text-white border-fuchsia-400 shadow-md' : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-900'}`}>
               {tab === 'Recent' ? <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> Recent</span> : tab}
             </button>
           ))}
@@ -276,13 +276,13 @@ export default function Lexicon() {
 
           <DragOverlay adjustScale={true}>
             {activeId ? (
-              <div className="flex items-center justify-between p-4 rounded-3xl border bg-white border-[#e8be61] shadow-2xl scale-105 opacity-90">
+              <div className="flex items-center justify-between p-4 rounded-3xl border bg-slate-950 border-fuchsia-400 shadow-2xl scale-105 opacity-90">
                 <div className="flex items-center gap-3 flex-1">
-                  <div className="p-1 text-[#e8be61]"><GripVertical className="w-5 h-5" /></div>
-                  <Hash className="w-5 h-5 text-[#e8be61]" />
+                  <div className="p-1 text-fuchsia-400"><GripVertical className="w-5 h-5" /></div>
+                  <Hash className="w-5 h-5 text-fuchsia-400" />
                   <div className="flex flex-col">
-                    <span className="font-bold text-[#7d685c]">{tags.find(t => t.id === activeId)?.name}</span>
-                    <span className="text-[10px] text-[#b58b72] uppercase tracking-wider">{tags.find(t => t.id === activeId)?.category || 'Other'}</span>
+                    <span className="font-bold text-slate-300">{tags.find(t => t.id === activeId)?.name}</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">{tags.find(t => t.id === activeId)?.category || 'Other'}</span>
                   </div>
                 </div>
               </div>
@@ -291,29 +291,29 @@ export default function Lexicon() {
         </DndContext>
         
         {filteredTags.length === 0 && (
-          <div className="text-center py-16 bg-[#fffaf5] rounded-3xl border border-[#e8dcc4] border-dashed">
-            <TagIcon className="w-12 h-12 text-[#b58b72]/50 mx-auto mb-4" />
-            <p className="text-[#b58b72] text-lg">No tags found.</p>
+          <div className="text-center py-16 bg-slate-950 rounded-3xl border border-slate-800 border-dashed">
+            <TagIcon className="w-12 h-12 text-slate-500/50 mx-auto mb-4" />
+            <p className="text-slate-400 text-lg">No tags found.</p>
           </div>
         )}
       </div>
 
       <AnimatePresence>
         {deleteConfirmId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="bg-[#fffaf5] rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-[#e8dcc4]">
-              <div className="flex items-center gap-3 text-[#a85a5a] mb-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="bg-slate-950 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-800">
+              <div className="flex items-center gap-3 text-rose-500 mb-4">
                 <AlertTriangle className="w-6 h-6" />
                 <h3 className="text-lg font-bold">Delete Tag?</h3>
               </div>
-              <p className="text-[#7d685c] mb-6">
+              <p className="text-slate-300 mb-6">
                 This will remove the tag "{tags.find(t => t.id === deleteConfirmId)?.name}" from all books. This action cannot be undone.
               </p>
               <div className="flex gap-3">
-                <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3 rounded-xl font-bold text-[#7d685c] hover:bg-[#fcf8f2] border border-[#e8dcc4] transition-colors">
+                <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3 rounded-xl font-bold text-slate-300 hover:bg-slate-900 border border-slate-800 transition-colors">
                   Cancel
                 </button>
-                <button onClick={executeDelete} className="flex-1 py-3 rounded-xl font-bold bg-[#fce4e4] text-[#a85a5a] hover:bg-[#f8d7da] border border-[#f8d7da] transition-colors shadow-sm">
+                <button onClick={executeDelete} className="flex-1 py-3 rounded-xl font-bold bg-rose-400/20 text-rose-500 hover:bg-rose-400/30 border border-rose-400/50 transition-colors shadow-sm">
                   Delete
                 </button>
               </div>

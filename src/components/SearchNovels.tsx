@@ -107,9 +107,6 @@ export default function SearchNovels() {
     });
   }, [filteredResults, sortBy, sortOrder]);
 
-  useEffect(() => {
-    fetchPopular();
-  }, []);
 
   const fetchPopular = async () => {
     if (loadingPopular) return;
@@ -388,56 +385,112 @@ export default function SearchNovels() {
               </motion.div>
             )}
           </AnimatePresence>
-
           {/* New Explore Tags Section */}
-          <div className="px-4 pb-4 space-y-6 bg-[#fffaf5] rounded-3xl pt-6 mt-4">
+          <div className="px-4 pb-4 space-y-6 bg-slate-950 border border-slate-800 rounded-3xl pt-6 mt-4">
+            
+            {/* Explore Tags */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#b58b72] uppercase tracking-widest">Explore Tags</span>
-                <button type="button" onClick={shuffleTags} className="text-xs font-bold text-[#8c6b5d] flex items-center gap-1 hover:opacity-70 transition-opacity">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Explore Tags</span>
+                <button 
+                  type="button"
+                  onClick={shuffleTags}
+                  className="text-xs font-bold text-slate-400 flex items-center gap-1 hover:text-fuchsia-400 transition-colors"
+                >
                   <RefreshCw className="w-3 h-3" /> Shuffle
                 </button>
               </div>
               
               <div className="flex flex-wrap gap-2">
                 {tropes.filter(t => !hiddenTropes.includes(t.id)).map(trope => (
-                  <button key={trope.id} type="button" onClick={() => handleSingleTap(trope.id)} onDoubleClick={() => handleDoubleTap(trope.id)} className={`px-4 py-2 rounded-full text-sm font-medium transition-all select-none ${trope.state === 'include' ? 'bg-[#d1e5d5] text-[#2d4a36]' : trope.state === 'exclude' ? 'bg-[#f8d7da] text-[#721c24]' : 'bg-white text-[#7d685c] border border-[#e8dcc4] hover:bg-[#fcf8f2]'}`}>
+                  <button
+                    key={trope.id}
+                    type="button"
+                    onClick={() => handleSingleTap(trope.id)}
+                    onDoubleClick={() => handleDoubleTap(trope.id)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all select-none border ${
+                      trope.state === 'include' 
+                        ? 'bg-emerald-400/20 text-emerald-500 border-emerald-400/50' 
+                        : trope.state === 'exclude' 
+                        ? 'bg-rose-400/20 text-rose-500 border-rose-400/50' 
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-900'
+                    }`}
+                  >
                     {trope.state === 'exclude' ? '- ' : ''}{trope.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-4 pt-4 border-t border-[#e8dcc4]">
-              <span className="text-xs font-bold text-[#b58b72] uppercase tracking-widest flex items-center gap-1">
+            {/* Your Favorites & Added Tags */}
+            <div className="space-y-4 pt-4 border-t border-slate-800">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
                 <Star className="w-3 h-3" /> Your Favorites & Added Tags
               </span>
               
               <div className="flex flex-wrap gap-2">
                 {customTropes.map(trope => (
-                  <button key={trope.id} type="button" onClick={() => handleSingleTap(trope.id, true)} onDoubleClick={() => handleDoubleTap(trope.id, true)} className={`px-4 py-2 rounded-full text-sm font-medium transition-all select-none ${trope.state === 'include' ? 'bg-[#d1e5d5] text-[#2d4a36]' : trope.state === 'exclude' ? 'bg-[#fce4e4] text-[#a85a5a]' : 'bg-[#fce4e4] text-[#a85a5a]'}`}>
+                  <button
+                    key={trope.id}
+                    type="button"
+                    onClick={() => handleSingleTap(trope.id, true)}
+                    onDoubleClick={() => handleDoubleTap(trope.id, true)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all select-none border ${
+                      trope.state === 'include' 
+                        ? 'bg-emerald-400/20 text-emerald-500 border-emerald-400/50' 
+                        : 'bg-rose-400/20 text-rose-500 border-rose-400/50'
+                    }`}
+                  >
                     {trope.state === 'exclude' ? '- ' : ''}{trope.label}
                   </button>
                 ))}
-                {customTropes.length === 0 && <span className="text-[10px] text-[#b58b72] italic px-2 py-2">No custom tags added yet.</span>}
+                
+                {customTropes.length === 0 && (
+                   <span className="text-[10px] text-slate-500 italic px-2 py-2">No custom tags added yet.</span>
+                )}
               </div>
               
-              <p className="text-center text-[10px] text-[#b58b72] italic pt-2 pb-2">Tap to include (+), double tap to exclude (-).</p>
+              <p className="text-center text-[10px] text-slate-500 italic pt-2 pb-2">
+                Tap to include (+), double tap to exclude (-).
+              </p>
             </div>
 
+            {/* Custom Trope Input */}
             <div className="flex items-center gap-2 mt-2">
-              <input type="text" value={newTrope} onChange={(e) => setNewTrope(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomTrope(); } }} placeholder="Add a custom tag (e.g. Space Opera)..." className="flex-1 bg-white border border-[#e8dcc4] rounded-full py-2.5 pl-4 pr-4 text-[#7d685c] placeholder:text-[#b58b72] focus:outline-none focus:border-[#e8be61] transition-all text-sm shadow-sm" />
-              <button type="button" onClick={addCustomTrope} disabled={!newTrope.trim()} className="bg-white border border-[#e8dcc4] p-2.5 rounded-full text-[#b58b72] hover:text-[#e8be61] hover:border-[#e8be61] disabled:opacity-50 transition-all active:scale-95 shadow-sm">
+              <input
+                type="text"
+                value={newTrope}
+                onChange={(e) => setNewTrope(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addCustomTrope();
+                  }
+                }}
+                placeholder="Add a custom tag (e.g. Space Opera)..."
+                className="flex-1 bg-slate-950 border border-slate-800 rounded-full py-2.5 pl-4 pr-4 text-slate-300 placeholder:text-slate-500 focus:outline-none focus:border-fuchsia-400 transition-all text-sm shadow-sm"
+              />
+              <button
+                type="button"
+                onClick={addCustomTrope}
+                disabled={!newTrope.trim()}
+                className="bg-slate-950 border border-slate-800 p-2.5 rounded-full text-slate-500 hover:text-fuchsia-400 hover:border-fuchsia-400 disabled:opacity-50 transition-all active:scale-95 shadow-sm"
+              >
                 <Plus className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          <button type="submit" disabled={loading || (!query.trim() && tropes.filter(t => t.state !== 'neutral').length === 0 && releaseFilter === 'all' && minRating === 0)} className="w-full bg-[#e8be61] hover:bg-[#d4ad58] active:scale-[0.98] text-white px-6 py-4 rounded-xl font-bold text-lg transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2 shadow-md mt-6">
+          <button
+            type="submit"
+            disabled={loading || (!query.trim() && tropes.filter(t => t.state !== 'neutral').length === 0 && releaseFilter === 'all' && minRating === 0)}
+            className="w-full bg-fuchsia-400 hover:bg-fuchsia-500 active:scale-[0.98] text-white px-6 py-4 rounded-xl font-bold text-lg transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2 shadow-md mt-6 border border-fuchsia-500/20"
+          >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <> <Sparkles className="w-5 h-5" /> Get Book Recommendations </>}
           </button>
         </div>
       </motion.form>
+
           
       {error && <p className="text-rose-400 text-sm mt-4 text-center">{error}</p>}
 
