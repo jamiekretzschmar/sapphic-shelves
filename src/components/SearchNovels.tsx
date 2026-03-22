@@ -118,9 +118,24 @@ export default function SearchNovels() {
     });
     try {
       updateTask(taskId, { progress: 30 });
-      // Updated the prompt on the line below to strictly request contemporary romance
-      const res = await searchForNovels("Recommend 10 most popular and highly rated sapphic contemporary romance novels. Focus on books with high visibility and positive reviews.");
-      setPopularBooks(res);
+      
+      // Get titles/authors already in library to exclude them
+      const libraryBooks = books.map(b => `${b.title.toLowerCase()}|${b.author.toLowerCase()}`);
+      const exclusionList = libraryBooks.join(', ');
+
+      const prompt = `Recommend 10 most popular and highly rated sapphic contemporary romance novels. 
+      Focus on books with high visibility and positive reviews.
+      CRITICAL: Do NOT recommend any of these books that are already in the user's library: ${exclusionList}.`;
+
+      const res = await searchForNovels(prompt);
+      
+      // Filter out any books that might have slipped through or are 'Ignored'
+      const filteredRes = res.filter(b => {
+        const status = getBookStatusInLibrary(b.title, b.author);
+        return status !== 'Ignored' && !libraryBooks.includes(`${b.title.toLowerCase()}|${b.author.toLowerCase()}`);
+      });
+
+      setPopularBooks(filteredRes);
       updateTask(taskId, { status: 'completed', progress: 100 });
     } catch (err) {
       console.error("Failed to fetch popular books", err);

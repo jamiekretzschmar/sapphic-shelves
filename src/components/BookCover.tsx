@@ -15,17 +15,29 @@ export default function BookCover({ title, author, initialCoverUrl, className = 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [triedOpenLibrary, setTriedOpenLibrary] = useState(false);
 
   useEffect(() => {
     setSrc(initialCoverUrl || null);
     setError(false);
+    setTriedOpenLibrary(false);
   }, [initialCoverUrl]);
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (useOpenLibrary: boolean = false) => {
     if (isGenerating) return;
     setIsGenerating(true);
     setLoading(true);
     try {
+      if (useOpenLibrary) {
+        setTriedOpenLibrary(true);
+        const openLibraryUrl = `https://covers.openlibrary.org/b/title/${encodeURIComponent(title)}-${encodeURIComponent(author)}-L.jpg`;
+        setSrc(openLibraryUrl);
+        setError(false);
+        setIsGenerating(false);
+        setLoading(false);
+        return;
+      }
+      
       const generated = await generateBookCover(title, author);
       if (generated) {
         setSrc(generated);
@@ -43,10 +55,13 @@ export default function BookCover({ title, author, initialCoverUrl, className = 
   };
 
   const handleError = () => {
-    if (!error && !isGenerating) {
+    if (!isGenerating) {
       setError(true);
-      // Automatically try to generate if the initial URL fails
-      handleGenerate();
+      if (!triedOpenLibrary) {
+        handleGenerate(true);
+      } else {
+        handleGenerate(false);
+      }
     }
   };
 
