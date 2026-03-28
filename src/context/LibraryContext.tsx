@@ -40,7 +40,7 @@ export interface BackgroundTask {
   result?: any;
 }
 
-export type Theme = 'light' | 'dark' | 'lettuce' | 'system';
+export type Theme = 'light' | 'dark' | 'leaf' | 'system';
 
 interface LibraryContextType {
   books: Book[];
@@ -220,14 +220,16 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const root = window.document.documentElement;
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    const isLettuce = theme === 'lettuce';
+    const isLeaf = theme === 'leaf';
     
-    root.classList.remove('dark', 'lettuce');
+    root.classList.remove('light', 'dark', 'leaf');
     
     if (isDark) {
       root.classList.add('dark');
-    } else if (isLettuce) {
-      root.classList.add('lettuce');
+    } else if (isLeaf) {
+      root.classList.add('leaf');
+    } else {
+      root.classList.add('light');
     }
   }, [theme]);
 

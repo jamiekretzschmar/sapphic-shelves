@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Search, MapPin, Library as LibraryIcon, Camera, Sparkles, LayoutDashboard, Hash, Settings as SettingsIcon, Users, Terminal } from 'lucide-react';
+import { BookOpen, Search, MapPin, Library as LibraryIcon, Camera, Sparkles, LayoutDashboard, Hash, Settings as SettingsIcon, Users, Terminal, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MyAuthors from './components/MyAuthors';
 import SearchNovels from './components/SearchNovels';
@@ -13,9 +13,11 @@ import TaskHub from './components/TaskHub';
 import ErrorBoundary from './components/ErrorBoundary';
 import DebugPanel from './components/DebugPanel';
 import Logo from './components/Logo';
+import ReleaseTracker from './components/ReleaseTracker';
+import Layout from './components/Layout';
 import { LibraryProvider } from './context/LibraryContext';
 
-type Tab = 'dashboard' | 'library' | 'authors' | 'lexicon' | 'discovery' | 'sync' | 'settings' | 'debug';
+type Tab = 'dashboard' | 'library' | 'authors' | 'releases' | 'lexicon' | 'discovery' | 'sync' | 'settings' | 'debug';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -34,14 +36,14 @@ function AppContent() {
   }, []);
 
   return (
-    <div className="min-h-[100dvh] bg-stone-100 sm:p-8 flex items-center justify-center selection:bg-ocean/30">
+    <div className="min-h-[100dvh] bg-theme-bg sm:p-8 flex items-center justify-center selection:bg-theme-accent1/30">
       {/* Pixel 10 Pro Device Frame */}
-      <div className="w-full h-[100dvh] sm:w-[412px] sm:h-[892px] bg-[#F4F3F0] relative sm:rounded-[3rem] sm:border-[14px] border-stone-300 overflow-hidden shadow-2xl flex flex-col transition-colors duration-500">
+      <div className="w-full h-[100dvh] sm:w-[412px] sm:h-[892px] bg-theme-surface relative sm:rounded-[3rem] sm:border-[14px] border-theme-border overflow-hidden shadow-2xl flex flex-col transition-colors duration-500">
         
         {/* Ambient Background */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-[-10%] left-[-20%] w-[80%] h-[40%] rounded-full bg-[#4A7C82]/10 blur-[80px] mix-blend-multiply transition-all duration-1000"></div>
-          <div className="absolute bottom-[-10%] right-[-20%] w-[80%] h-[40%] rounded-full bg-[#8B5A5A]/10 blur-[80px] mix-blend-multiply transition-all duration-1000"></div>
+          <div className="absolute top-[-10%] left-[-20%] w-[80%] h-[40%] rounded-full bg-theme-accent1/10 blur-[80px] mix-blend-multiply transition-all duration-1000"></div>
+          <div className="absolute bottom-[-10%] right-[-20%] w-[80%] h-[40%] rounded-full bg-theme-accent2/10 blur-[80px] mix-blend-multiply transition-all duration-1000"></div>
         </div>
 
         <CommandPalette 
@@ -52,19 +54,19 @@ function AppContent() {
         
         {/* Mobile Header */}
         <header className="relative z-40 pt-safe mt-4 px-6 pb-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 text-[#5A0A18]">
+          <div className="flex items-center gap-3 text-theme-text">
             <button 
               onClick={() => setIsLogoLoading(!isLogoLoading)}
-              className="p-1.5 bg-white/50 rounded-2xl shadow-sm border border-white/60 hover:bg-white/80 transition-colors active:scale-95"
+              className="p-1.5 bg-theme-bg/50 rounded-2xl shadow-sm border border-theme-border/60 hover:bg-theme-bg/80 transition-colors active:scale-95"
               aria-label="Toggle loading state"
             >
               <Logo isLoading={isLogoLoading} size={28} />
             </button>
-            <h1 className="text-xl font-bold tracking-tight text-stone-800">Sapphic Shelves</h1>
+            <h1 className="text-xl font-bold tracking-tight text-theme-text">Sapphic Shelves</h1>
           </div>
           <button 
             onClick={() => setIsCmdPaletteOpen(true)}
-            className="p-3 text-slate-500 bg-white/40 hover:bg-white/60 border border-white/60 rounded-2xl transition-all duration-300 active:scale-90 shadow-sm"
+            className="p-3 text-theme-text/70 bg-theme-bg/40 hover:bg-theme-bg/60 border border-theme-border/60 rounded-2xl transition-all duration-300 active:scale-90 shadow-sm"
           >
             <Search className="w-5 h-5" />
           </button>
@@ -86,6 +88,11 @@ function AppContent() {
             {activeTab === 'authors' && (
               <motion.div key="authors" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3, ease: "easeOut" }}>
                 <MyAuthors />
+              </motion.div>
+            )}
+            {activeTab === 'releases' && (
+              <motion.div key="releases" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3, ease: "easeOut" }}>
+                <ReleaseTracker />
               </motion.div>
             )}
             {activeTab === 'lexicon' && (
@@ -124,6 +131,7 @@ function AppContent() {
             <TabButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-6 h-6" />} label="Dashboard" />
             <TabButton active={activeTab === 'library'} onClick={() => setActiveTab('library')} icon={<LibraryIcon className="w-6 h-6" />} label="Library" />
             <TabButton active={activeTab === 'authors'} onClick={() => setActiveTab('authors')} icon={<Users className="w-6 h-6" />} label="Authors" />
+            <TabButton active={activeTab === 'releases'} onClick={() => setActiveTab('releases')} icon={<Calendar className="w-6 h-6" />} label="Releases" />
             <TabButton active={activeTab === 'lexicon'} onClick={() => setActiveTab('lexicon')} icon={<Hash className="w-6 h-6" />} label="Lexicon" />
             <TabButton active={activeTab === 'discovery'} onClick={() => setActiveTab('discovery')} icon={<Sparkles className="w-6 h-6" />} label="Discovery" />
             <TabButton active={activeTab === 'sync'} onClick={() => setActiveTab('sync')} icon={<Camera className="w-6 h-6" />} label="Sync" />
@@ -142,8 +150,8 @@ function TabButton({ active, onClick, icon, label }: { active: boolean, onClick:
       onClick={onClick}
       className={`relative flex flex-col items-center justify-center min-w-[4.5rem] h-16 rounded-2xl transition-all duration-300 active:scale-90 snap-center shrink-0 ${
         active 
-          ? 'text-fuchsia-400 glass-neo-pressed' 
-          : 'text-slate-500 hover:text-slate-700 hover:bg-white/40'
+          ? 'text-theme-accent1 glass-neo-pressed' 
+          : 'text-theme-text/50 hover:text-theme-text/80 hover:bg-theme-bg/40'
       }`}
     >
       <div className="relative z-10 mb-1">{icon}</div>
@@ -156,7 +164,9 @@ export default function App() {
   return (
     <ErrorBoundary>
       <LibraryProvider>
-        <AppContent />
+        <Layout>
+          <AppContent />
+        </Layout>
       </LibraryProvider>
     </ErrorBoundary>
   );

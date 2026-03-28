@@ -6,6 +6,100 @@ import Markdown from 'react-markdown';
 import { useLibrary } from '../context/LibraryContext';
 import Logo from './Logo';
 
+interface BookCardProps {
+  book: any;
+  author: any;
+  idx: number;
+  isFuture: boolean;
+  isNew: boolean;
+  copiedBookIdx: string | null;
+  books: any[];
+  handleCopy: (book: any, authorId: string, idx: number) => void;
+  addBook: (book: any) => void;
+}
+
+const BookCard = ({ book, author, idx, isFuture, isNew, copiedBookIdx, books, handleCopy, addBook }: BookCardProps) => {
+  const isCopied = copiedBookIdx === `${author.id}-${idx}`;
+  const inLibrary = books.find(b => 
+    (b.title?.toLowerCase() || '') === (book.title?.toLowerCase() || '') && 
+    (b.author?.toLowerCase() || '') === (author.name?.toLowerCase() || '')
+  );
+
+  // Derive secondary card color based on parent author index or just use a subtle earthy tone
+  return (
+    <div className={`p-4 rounded-xl border transition-colors hover:border-black/10 group/book ${
+      isFuture ? 'border-theme-earth-maroon-dark/30 bg-theme-earth-maroon-light' : 
+      isNew ? 'border-theme-earth-blue-dark/30 bg-theme-earth-blue-light' : 
+      'bg-theme-surface border-theme-border hover:bg-white/40'
+    }`}>
+      <div className="flex justify-between items-start mb-2">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h5 className="font-medium text-theme-text">{book.title}</h5>
+            {isFuture && <span className="text-[10px] font-bold uppercase tracking-wider text-theme-warning bg-theme-warning/10 px-2 py-0.5 rounded-full">Upcoming</span>}
+            {isNew && <span className="text-[10px] font-bold uppercase tracking-wider text-theme-accent1 bg-theme-accent1/10 px-2 py-0.5 rounded-full">New Release</span>}
+            {inLibrary && (
+              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                inLibrary.status === 'Read' ? 'bg-theme-accent1/20 text-theme-accent1' :
+                inLibrary.status === 'Wishlist' ? 'bg-theme-accent2/20 text-theme-accent2' :
+                'bg-theme-text-secondary/20 text-theme-text-secondary'
+              }`}>
+                {inLibrary.status}
+              </span>
+            )}
+          </div>
+          <span className="text-xs font-mono text-theme-text-secondary bg-theme-bg px-2 py-1 rounded-md mt-1.5 inline-block">
+            {book.releaseDate || book.year}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => handleCopy(book, author.id, idx)}
+            className="p-2 text-theme-text-secondary hover:text-theme-accent2 hover:bg-theme-accent2/10 rounded-lg transition-all"
+            title="Copy details"
+          >
+            {isCopied ? <Check className="w-4 h-4 text-theme-accent1" /> : <Copy className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+      <p className="text-sm text-theme-text-secondary mb-4">{book.description}</p>
+      
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => addBook({ title: book.title, author: author.name, status: 'Wishlist', tags: [], description: book.description })}
+          disabled={!!inLibrary}
+          className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+            inLibrary?.status === 'Wishlist' ? 'bg-theme-accent2/20 text-theme-accent2 border border-theme-accent2/30' : 
+            'bg-theme-border text-theme-text hover:bg-theme-accent2 hover:text-white disabled:opacity-50'
+          }`}
+        >
+          <Plus className="w-3 h-3" /> Wishlist
+        </button>
+        <button
+          onClick={() => addBook({ title: book.title, author: author.name, status: 'Read', tags: [], description: book.description })}
+          disabled={!!inLibrary}
+          className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+            inLibrary?.status === 'Read' ? 'bg-theme-accent1/20 text-theme-accent1 border border-theme-accent1/30' : 
+            'bg-theme-border text-theme-text hover:bg-theme-accent1 hover:text-white disabled:opacity-50'
+          }`}
+        >
+          <Check className="w-3 h-3" /> Read
+        </button>
+        <button
+          onClick={() => addBook({ title: book.title, author: author.name, status: 'Ignored', tags: [], description: book.description })}
+          disabled={!!inLibrary}
+          className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+            inLibrary?.status === 'Ignored' ? 'bg-theme-text-secondary/20 text-theme-text-secondary border border-theme-text-secondary/30' : 
+            'bg-theme-border text-theme-text hover:text-white disabled:opacity-50'
+          }`}
+        >
+          <X className="w-3 h-3" /> Ignore
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default function MyAuthors() {
   const { authors, addAuthor, removeAuthor, updateAuthor, addTask, updateTask, books, addBook } = useLibrary();
   const [query, setQuery] = useState('');
@@ -21,6 +115,42 @@ export default function MyAuthors() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedAuthors, setSelectedAuthors] = useState<Set<string>>(new Set());
   const [sortOption, setSortOption] = useState<'alphabetical' | 'books' | 'favorites'>('favorites');
+
+  const [isManualAdd, setIsManualAdd] = useState(false);
+  const [manualAuthor, setManualAuthor] = useState({ name: '', biography: '' });
+  const [isAddingNovel, setIsAddingNovel] = useState<string | null>(null);
+  const [newNovel, setNewNovel] = useState({ title: '', year: new Date().getFullYear(), description: '', releaseDate: '' });
+
+  const handleManualAddAuthor = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualAuthor.name) return;
+    
+    addAuthor({
+      id: crypto.randomUUID(),
+      name: manualAuthor.name,
+      biography: manualAuthor.biography,
+      bibliography: []
+    });
+    
+    setManualAuthor({ name: '', biography: '' });
+    setIsManualAdd(false);
+    setNotification(`Added ${manualAuthor.name} manually.`);
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleManualAddNovel = (authorId: string) => {
+    if (!newNovel.title) return;
+    
+    const author = authors.find(a => a.id === authorId);
+    if (author) {
+      const updatedBibliography = [...author.bibliography, { ...newNovel }];
+      updateAuthor(authorId, { bibliography: updatedBibliography });
+      setNewNovel({ title: '', year: new Date().getFullYear(), description: '', releaseDate: '' });
+      setIsAddingNovel(null);
+      setNotification(`Added ${newNovel.title} to ${author.name}'s bibliography.`);
+      setTimeout(() => setNotification(null), 3000);
+    }
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,82 +360,6 @@ export default function MyAuthors() {
     })[0];
   };
 
-  const BookCard = ({ book, author, idx, isFuture, isNew }: { book: any, author: any, idx: number, isFuture: boolean, isNew: boolean }) => {
-    const isCopied = copiedBookIdx === `${author.id}-${idx}`;
-    const inLibrary = books.find(b => 
-      (b.title?.toLowerCase() || '') === (book.title?.toLowerCase() || '') && 
-      (b.author?.toLowerCase() || '') === (author.name?.toLowerCase() || '')
-    );
-
-    return (
-      <div className={`bg-slate-900 p-4 rounded-xl border transition-colors hover:border-white/10 group/book ${isFuture ? 'border-amber-500/30 bg-amber-500/5' : isNew ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-white/5'}`}>
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h5 className="font-medium text-slate-200">{book.title}</h5>
-              {isFuture && <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full">Upcoming</span>}
-              {isNew && <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">New Release</span>}
-              {inLibrary && (
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                  inLibrary.status === 'Read' ? 'bg-emerald-500/20 text-emerald-400' :
-                  inLibrary.status === 'Wishlist' ? 'bg-fuchsia-500/20 text-fuchsia-400' :
-                  'bg-slate-500/20 text-slate-400'
-                }`}>
-                  {inLibrary.status}
-                </span>
-              )}
-            </div>
-            <span className="text-xs font-mono text-slate-500 bg-slate-950 px-2 py-1 rounded-md mt-1.5 inline-block">
-              {book.releaseDate || book.year}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => handleCopy(book, author.id, idx)}
-              className="p-2 text-slate-500 hover:text-fuchsia-400 hover:bg-fuchsia-400/10 rounded-lg transition-all"
-              title="Copy details"
-            >
-              {isCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-        <p className="text-sm text-slate-400 mb-4">{book.description}</p>
-        
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => addBook({ title: book.title, author: author.name, status: 'Wishlist', tags: [], description: book.description })}
-            disabled={!!inLibrary}
-            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
-              inLibrary?.status === 'Wishlist' ? 'bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30' : 
-              'bg-slate-800 text-slate-300 hover:bg-fuchsia-600 hover:text-white disabled:opacity-50'
-            }`}
-          >
-            <Plus className="w-3 h-3" /> Wishlist
-          </button>
-          <button
-            onClick={() => addBook({ title: book.title, author: author.name, status: 'Read', tags: [], description: book.description })}
-            disabled={!!inLibrary}
-            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
-              inLibrary?.status === 'Read' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
-              'bg-slate-800 text-slate-300 hover:bg-emerald-600 hover:text-white disabled:opacity-50'
-            }`}
-          >
-            <Check className="w-3 h-3" /> Read
-          </button>
-          <button
-            onClick={() => addBook({ title: book.title, author: author.name, status: 'Ignored', tags: [], description: book.description })}
-            disabled={!!inLibrary}
-            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
-              inLibrary?.status === 'Ignored' ? 'bg-slate-500/20 text-slate-400 border border-slate-500/30' : 
-              'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-50'
-            }`}
-          >
-            <X className="w-3 h-3" /> Ignore
-          </button>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-12">
@@ -315,51 +369,93 @@ export default function MyAuthors() {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-neo px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border-emerald-500/30"
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-neo px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border-theme-accent1/30"
           >
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-slate-100 font-medium">{notification}</span>
+            <div className="w-2 h-2 rounded-full bg-theme-accent1 animate-pulse" />
+            <span className="text-theme-text font-medium">{notification}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
       <div className="bento-card relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/5 to-purple-500/5 pointer-events-none"></div>
-        <h2 className="text-2xl font-bold mb-6 text-slate-100 flex items-center gap-2">
-          <Plus className="w-6 h-6 text-fuchsia-400" />
-          Track a New Author
-        </h2>
-        <form onSubmit={handleSearch} className="flex flex-col gap-3 relative z-10">
-          <div className="relative w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. Sarah Waters..."
-              className="w-full bg-slate-950/50 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 transition-all shadow-inner text-base"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !query.trim()}
-            className="w-full bg-fuchsia-600 hover:bg-fuchsia-500 active:scale-[0.98] text-white px-6 py-4 rounded-2xl font-medium flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-fuchsia-500/25"
+        <div className="absolute inset-0 bg-gradient-to-r from-theme-accent2/5 to-theme-accent2/10 pointer-events-none"></div>
+        <div className="flex items-center justify-between mb-6 relative z-10">
+          <h2 className="text-2xl font-bold text-theme-text flex items-center gap-2">
+            <Plus className="w-6 h-6 text-theme-accent2" />
+            {isManualAdd ? 'Add Author Manually' : 'Track a New Author'}
+          </h2>
+          <button 
+            onClick={() => setIsManualAdd(!isManualAdd)}
+            className="text-xs font-bold uppercase tracking-widest text-theme-accent2 hover:underline"
           >
-            {loading ? <Logo isLoading={true} size={20} /> : <Plus className="w-5 h-5" />}
-            <span>Track Author</span>
+            {isManualAdd ? 'Switch to Search' : 'Add Manually'}
           </button>
-        </form>
-        {error && <p className="text-rose-400 text-sm mt-4">{error}</p>}
+        </div>
+
+        {isManualAdd ? (
+          <form onSubmit={handleManualAddAuthor} className="flex flex-col gap-4 relative z-10">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-widest">Author Name</label>
+              <input
+                type="text"
+                value={manualAuthor.name}
+                onChange={(e) => setManualAuthor(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="e.g. Sarah Waters"
+                className="w-full bg-theme-bg/50 border border-white/10 rounded-2xl py-3 px-4 text-theme-text placeholder:text-theme-text-secondary focus:outline-none focus:ring-2 focus:ring-theme-accent2/50 transition-all"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-widest">Biography</label>
+              <textarea
+                value={manualAuthor.biography}
+                onChange={(e) => setManualAuthor(prev => ({ ...prev, biography: e.target.value }))}
+                placeholder="Short biography..."
+                rows={3}
+                className="w-full bg-theme-bg/50 border border-white/10 rounded-2xl py-3 px-4 text-theme-text placeholder:text-theme-text-secondary focus:outline-none focus:ring-2 focus:ring-theme-accent2/50 transition-all resize-none"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-theme-accent2 hover:bg-theme-accent2 active:scale-[0.98] text-white px-6 py-4 rounded-2xl font-medium flex items-center justify-center gap-2 transition-all duration-300 shadow-lg"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add Author</span>
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleSearch} className="flex flex-col gap-3 relative z-10">
+            <div className="relative w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-theme-text-secondary" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="e.g. Sarah Waters..."
+                className="w-full bg-theme-bg/50 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-theme-text placeholder:text-theme-text-secondary focus:outline-none focus:ring-2 focus:ring-theme-accent2/50 transition-all shadow-inner text-base"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading || !query.trim()}
+              className="w-full bg-theme-accent2 hover:bg-theme-accent2 active:scale-[0.98] text-white px-6 py-4 rounded-2xl font-medium flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-theme-accent2/25"
+            >
+              {loading ? <Logo isLoading={true} size={20} /> : <Plus className="w-5 h-5" />}
+              <span>Track Author</span>
+            </button>
+          </form>
+        )}
+        {error && <p className="text-theme-danger text-sm mt-4">{error}</p>}
       </div>
 
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-slate-100">My Tracked Authors</h2>
+          <h2 className="text-2xl font-bold text-theme-text">My Tracked Authors</h2>
           <div className="flex items-center gap-3">
             <select
               value={sortOption}
               onChange={(e) => setSortOption(e.target.value as any)}
-              className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-fuchsia-500/50 appearance-none cursor-pointer"
+              className="bg-theme-surface border border-white/10 rounded-xl px-3 py-2 text-sm text-theme-text focus:outline-none focus:border-theme-accent2/50 appearance-none cursor-pointer"
             >
               <option value="favorites">Sort by Favorites</option>
               <option value="alphabetical">Sort Alphabetically</option>
@@ -385,14 +481,14 @@ export default function MyAuthors() {
                   >
                     <button 
                       onClick={() => { setShowBulkMenu(false); handleBulkPulse('favorites'); }}
-                      className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-white/40 transition-colors border-b border-white/10 flex items-center gap-2"
+                      className="w-full text-left px-4 py-3 text-sm text-theme-text hover:bg-white/40 transition-colors border-b border-white/10 flex items-center gap-2"
                     >
-                      <Star className="w-4 h-4 text-amber-500" />
+                      <Star className="w-4 h-4 text-theme-warning" />
                       Update Favorites
                     </button>
                     <button 
                       onClick={() => { setShowBulkMenu(false); handleBulkPulse('all'); }}
-                      className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-white/40 transition-colors border-b border-white/10 flex items-center gap-2"
+                      className="w-full text-left px-4 py-3 text-sm text-theme-text-secondary hover:bg-white/40 transition-colors border-b border-white/10 flex items-center gap-2"
                     >
                       <Book className="w-4 h-4 text-ocean" />
                       Update All
@@ -407,9 +503,9 @@ export default function MyAuthors() {
                           setSelectedAuthors(new Set());
                         }
                       }}
-                      className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-white/40 transition-colors flex items-center gap-2"
+                      className="w-full text-left px-4 py-3 text-sm text-theme-text hover:bg-white/40 transition-colors flex items-center gap-2"
                     >
-                      <Check className="w-4 h-4 text-emerald-600" />
+                      <Check className="w-4 h-4 text-theme-accent1" />
                       {selectionMode && selectedAuthors.size > 0 ? `Update Selected (${selectedAuthors.size})` : selectionMode ? 'Cancel Selection' : 'Select Authors...'}
                     </button>
                   </motion.div>
@@ -419,19 +515,19 @@ export default function MyAuthors() {
             {selectionMode && (
               <button
                 onClick={() => { setSelectionMode(false); setSelectedAuthors(new Set()); }}
-                className="text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+                className="text-sm font-medium text-theme-text-secondary hover:text-theme-text transition-colors"
               >
                 Cancel
               </button>
             )}
-            <span className="text-sm font-medium text-slate-500 bg-white/30 px-3 py-1 rounded-full border border-white/20">{sortedAuthors.length} tracked</span>
+            <span className="text-sm font-medium text-theme-text-secondary bg-white/30 px-3 py-1 rounded-full border border-white/20">{sortedAuthors.length} tracked</span>
           </div>
         </div>
         
         {sortedAuthors.length === 0 ? (
-          <div className="text-center py-16 bg-slate-900/30 rounded-3xl border border-white/5 border-dashed">
-            <Book className="w-16 h-16 text-slate-600/50 mx-auto mb-4" />
-            <p className="text-slate-400 text-lg">You aren't tracking any authors yet.</p>
+          <div className="text-center py-16 bg-theme-surface/30 rounded-3xl border border-white/5 border-dashed">
+            <Book className="w-16 h-16 text-theme-text-secondary mx-auto mb-4" />
+            <p className="text-theme-text-secondary text-lg">You aren't tracking any authors yet.</p>
           </div>
         ) : (
           <motion.div 
@@ -446,15 +542,17 @@ export default function MyAuthors() {
               }
             }}
           >
-            {sortedAuthors.map((author) => (
-              <motion.div 
-                key={author.id} 
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0, transition: { type: 'spring', bounce: 0.4 } }
-                }}
-                className="bento-card p-0 overflow-hidden"
-              >
+            {sortedAuthors.map((author, index) => {
+              const cardClass = index % 3 === 0 ? 'bento-card-blue' : index % 3 === 1 ? 'bento-card-yellow' : 'bento-card-olive';
+              return (
+                <motion.div 
+                  key={author.id} 
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0, transition: { type: 'spring', bounce: 0.4 } }
+                  }}
+                  className={`${cardClass} p-0 overflow-hidden`}
+                >
                 <div 
                   className={`p-6 cursor-pointer flex items-center justify-between transition-colors ${selectedAuthors.has(author.id) ? 'bg-ocean/5' : 'hover:bg-white/[0.02]'}`}
                   onClick={() => selectionMode ? toggleSelection({ stopPropagation: () => {} } as React.MouseEvent, author.id) : handleExpand(author.id)}
@@ -462,7 +560,7 @@ export default function MyAuthors() {
                   <div className="flex-1 pr-4 overflow-hidden flex items-center gap-4">
                     {selectionMode && (
                       <div 
-                        className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${selectedAuthors.has(author.id) ? 'bg-ocean border-ocean text-white' : 'border-slate-400'}`}
+                        className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${selectedAuthors.has(author.id) ? 'bg-ocean border-ocean text-white' : 'border-theme-text-secondary'}`}
                         onClick={(e) => toggleSelection(e, author.id)}
                       >
                         {selectedAuthors.has(author.id) && <Check className="w-3 h-3" />}
@@ -470,18 +568,18 @@ export default function MyAuthors() {
                     )}
                     <div className="flex-1 overflow-hidden">
                       <div className="flex items-center gap-3">
-                        <h3 className="text-xl font-bold text-slate-100 tracking-tight">{author.name}</h3>
-                        {author.isFavorite && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
+                        <h3 className="text-xl font-bold text-theme-text tracking-tight">{author.name}</h3>
+                        {author.isFavorite && <Star className="w-4 h-4 text-theme-warning fill-theme-warning" />}
                         {author.hasUpcomingRelease && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-400/20 px-2 py-0.5 rounded-full border border-emerald-400/30 flex items-center gap-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-theme-accent1 bg-theme-accent1/20 px-2 py-0.5 rounded-full border border-theme-accent1/30 flex items-center gap-1">
                             <Bell className="w-3 h-3" /> Upcoming
                           </span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <p className="text-sm text-slate-500 truncate max-w-[200px]">{author.biography}</p>
+                        <p className="text-sm text-theme-text-secondary truncate max-w-[200px]">{author.biography}</p>
                         {getMostRecentBook(author.bibliography) && (
-                          <span className="text-[10px] text-slate-400 bg-white/5 px-2 py-0.5 rounded border border-white/5 hidden sm:inline-block">
+                          <span className="text-[10px] text-theme-text-secondary bg-white/5 px-2 py-0.5 rounded border border-white/5 hidden sm:inline-block">
                             Latest: {getMostRecentBook(author.bibliography)?.title}
                           </span>
                         )}
@@ -491,26 +589,26 @@ export default function MyAuthors() {
                   <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                     <button 
                       onClick={(e) => toggleFavorite(e, author)}
-                      className={`p-2 rounded-lg transition-colors ${author.isFavorite ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20' : 'text-slate-500 hover:text-amber-400 hover:bg-amber-400/10'}`}
+                      className={`p-2 rounded-lg transition-colors ${author.isFavorite ? 'text-theme-warning bg-theme-warning/10 hover:bg-theme-warning/20' : 'text-theme-text-secondary hover:text-theme-warning hover:bg-theme-warning/10'}`}
                       title="Favorite Author"
                     >
-                      <Star className={`w-5 h-5 ${author.isFavorite ? 'fill-amber-400' : ''}`} />
+                      <Star className={`w-5 h-5 ${author.isFavorite ? 'fill-theme-warning' : ''}`} />
                     </button>
                     <button 
                       onClick={(e) => handlePulse(e, author.name, author.id)}
-                      className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors hidden sm:block"
+                      className="p-2 text-theme-text-secondary hover:text-theme-accent1 hover:bg-theme-accent1/10 rounded-lg transition-colors hidden sm:block"
                       title="Author Pulse"
                     >
                       <Activity className="w-5 h-5" />
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); removeAuthor(author.id); }}
-                      className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-lg transition-colors hidden sm:block"
+                      className="p-2 text-theme-text-secondary hover:text-theme-danger hover:bg-theme-danger/10 rounded-lg transition-colors hidden sm:block"
                       title="Remove Author"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
-                    {expandedAuthor === author.id ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
+                    {expandedAuthor === author.id ? <ChevronUp className="w-5 h-5 text-theme-text-secondary" /> : <ChevronDown className="w-5 h-5 text-theme-text-secondary" />}
                   </div>
                 </div>
                 
@@ -520,11 +618,11 @@ export default function MyAuthors() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-white/5 bg-slate-950/50"
+                      className="border-t border-white/5 bg-theme-bg/50"
                     >
                       <div className="p-6 space-y-6">
                         {loadingAuthorId === author.id ? (
-                          <div className="flex flex-col items-center justify-center py-8 text-slate-400 space-y-3">
+                          <div className="flex flex-col items-center justify-center py-8 text-theme-text-secondary space-y-3">
                             <Logo isLoading={true} size={32} />
                             <p className="text-sm">Retrieving archival details...</p>
                           </div>
@@ -533,13 +631,13 @@ export default function MyAuthors() {
                             <div className="flex items-center gap-2 sm:hidden mb-4 pb-4 border-b border-white/5">
                               <button 
                                 onClick={(e) => handlePulse(e, author.name, author.id)}
-                                className="flex-1 p-2 text-sm font-medium text-blue-400 bg-blue-400/10 hover:bg-blue-400/20 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                className="flex-1 p-2 text-sm font-medium text-theme-accent1 bg-theme-accent1/10 hover:bg-theme-accent1/20 rounded-lg transition-colors flex items-center justify-center gap-2"
                               >
                                 <Activity className="w-4 h-4" /> Pulse
                               </button>
                               <button 
                                 onClick={(e) => { e.stopPropagation(); removeAuthor(author.id); }}
-                                className="flex-1 p-2 text-sm font-medium text-rose-400 bg-rose-400/10 hover:bg-rose-400/20 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                className="flex-1 p-2 text-sm font-medium text-theme-danger bg-theme-danger/10 hover:bg-theme-danger/20 rounded-lg transition-colors flex items-center justify-center gap-2"
                               >
                                 <Trash2 className="w-4 h-4" /> Remove
                               </button>
@@ -548,20 +646,20 @@ export default function MyAuthors() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <div className="space-y-4">
                                 <div>
-                                  <h4 className="text-sm font-medium text-fuchsia-400 uppercase tracking-wider mb-2">Biography</h4>
-                                  <p className="text-slate-300 text-sm leading-relaxed">{author.biography}</p>
+                                  <h4 className="text-sm font-medium text-theme-accent2 uppercase tracking-wider mb-2">Biography</h4>
+                                  <p className="text-theme-text-secondary text-sm leading-relaxed">{author.biography}</p>
                                 </div>
                                 
                                 {getMostRecentBook(author.bibliography) && (
-                                  <div className="bg-fuchsia-500/5 border border-fuchsia-500/20 rounded-2xl p-4">
-                                    <h4 className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                  <div className="bg-theme-accent2/5 border border-theme-accent2/20 rounded-2xl p-4">
+                                    <h4 className="text-xs font-bold text-theme-accent2 uppercase tracking-wider mb-3 flex items-center gap-2">
                                       <Star className="w-3 h-3" /> Most Recent Release
                                     </h4>
                                     <div className="space-y-2">
-                                      <h5 className="font-bold text-slate-100">{getMostRecentBook(author.bibliography)?.title}</h5>
-                                      <p className="text-xs text-slate-400 line-clamp-2">{getMostRecentBook(author.bibliography)?.description}</p>
+                                      <h5 className="font-bold text-theme-text">{getMostRecentBook(author.bibliography)?.title}</h5>
+                                      <p className="text-xs text-theme-text-secondary line-clamp-2">{getMostRecentBook(author.bibliography)?.description}</p>
                                       <div className="pt-2">
-                                        <span className="text-[10px] font-mono text-fuchsia-300 bg-fuchsia-500/10 px-2 py-1 rounded">
+                                        <span className="text-[10px] font-mono text-theme-accent2 bg-theme-accent2/10 px-2 py-1 rounded">
                                           {getMostRecentBook(author.bibliography)?.releaseDate || getMostRecentBook(author.bibliography)?.year}
                                         </span>
                                       </div>
@@ -583,17 +681,81 @@ export default function MyAuthors() {
                               </div>
 
                               <div>
-                                <h4 className="text-sm font-medium text-fuchsia-400 uppercase tracking-wider mb-3">Bibliography</h4>
-                                <div className="grid gap-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="pt-4 border-t border-white/5">
+                                  <h4 className="text-sm font-medium text-theme-accent2 uppercase tracking-wider mb-3 flex items-center justify-between">
+                                    Bibliography
+                                    <button 
+                                      onClick={() => setIsAddingNovel(isAddingNovel === author.id ? null : author.id)}
+                                      className="text-[10px] font-bold uppercase tracking-widest text-theme-accent1 hover:underline flex items-center gap-1"
+                                    >
+                                      <Plus className="w-3 h-3" /> Add Novel
+                                    </button>
+                                  </h4>
+
+                                  {isAddingNovel === author.id && (
+                                    <motion.div 
+                                      initial={{ opacity: 0, y: -10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      className="bg-theme-surface/50 border border-theme-accent1/20 rounded-2xl p-4 mb-6 space-y-4"
+                                    >
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1">
+                                          <label className="text-[9px] font-bold text-theme-text-secondary uppercase tracking-widest">Title</label>
+                                          <input 
+                                            type="text" 
+                                            value={newNovel.title}
+                                            onChange={(e) => setNewNovel(prev => ({ ...prev, title: e.target.value }))}
+                                            className="w-full bg-theme-bg border border-white/10 rounded-xl py-2 px-3 text-sm text-theme-text focus:outline-none focus:border-theme-accent1/50"
+                                            placeholder="Novel Title"
+                                          />
+                                        </div>
+                                        <div className="space-y-1">
+                                          <label className="text-[9px] font-bold text-theme-text-secondary uppercase tracking-widest">Year</label>
+                                          <input 
+                                            type="number" 
+                                            value={newNovel.year}
+                                            onChange={(e) => setNewNovel(prev => ({ ...prev, year: parseInt(e.target.value) }))}
+                                            className="w-full bg-theme-bg border border-white/10 rounded-xl py-2 px-3 text-sm text-theme-text focus:outline-none focus:border-theme-accent1/50"
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[9px] font-bold text-theme-text-secondary uppercase tracking-widest">Description</label>
+                                        <textarea 
+                                          value={newNovel.description}
+                                          onChange={(e) => setNewNovel(prev => ({ ...prev, description: e.target.value }))}
+                                          className="w-full bg-theme-bg border border-white/10 rounded-xl py-2 px-3 text-sm text-theme-text focus:outline-none focus:border-theme-accent1/50 resize-none"
+                                          rows={2}
+                                          placeholder="Short description..."
+                                        />
+                                      </div>
+                                      <div className="flex justify-end gap-2">
+                                        <button 
+                                          onClick={() => setIsAddingNovel(null)}
+                                          className="px-3 py-1.5 rounded-lg text-xs font-medium text-theme-text-secondary hover:bg-white/5"
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button 
+                                          onClick={() => handleManualAddNovel(author.id)}
+                                          className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest bg-theme-accent1 text-white shadow-lg shadow-theme-accent1/20"
+                                        >
+                                          Add to Bibliography
+                                        </button>
+                                      </div>
+                                    </motion.div>
+                                  )}
+
+                                  <div className="grid gap-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                                   
                                   {/* Upcoming Releases */}
                                   {author.bibliography.filter(b => isFutureRelease(b.releaseDate)).length > 0 && (
                                     <div className="space-y-3">
-                                      <h5 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2 border-b border-amber-500/20 pb-2">
+                                      <h5 className="text-xs font-bold text-theme-warning uppercase tracking-wider flex items-center gap-2 border-b border-theme-warning/20 pb-2">
                                         <Bell className="w-3 h-3" /> Upcoming Releases
                                       </h5>
                                       {author.bibliography.filter(b => isFutureRelease(b.releaseDate)).map((book, idx) => (
-                                        <BookCard key={`upcoming-${idx}`} book={book} author={author} idx={idx} isFuture={true} isNew={false} />
+                                        <BookCard key={`upcoming-${idx}`} book={book} author={author} idx={idx} isFuture={true} isNew={false} copiedBookIdx={copiedBookIdx} books={books} handleCopy={handleCopy} addBook={addBook} />
                                       ))}
                                     </div>
                                   )}
@@ -601,42 +763,43 @@ export default function MyAuthors() {
                                   {/* Recent Releases */}
                                   {author.bibliography.filter(b => isNewRelease(b.releaseDate) && !isFutureRelease(b.releaseDate)).length > 0 && (
                                     <div className="space-y-3">
-                                      <h5 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2 border-b border-emerald-500/20 pb-2">
+                                      <h5 className="text-xs font-bold text-theme-accent1 uppercase tracking-wider flex items-center gap-2 border-b border-theme-accent1/20 pb-2">
                                         <Star className="w-3 h-3" /> Recent Releases (Last 30 Days)
                                       </h5>
                                       {author.bibliography.filter(b => isNewRelease(b.releaseDate) && !isFutureRelease(b.releaseDate)).map((book, idx) => (
-                                        <BookCard key={`recent-${idx}`} book={book} author={author} idx={idx} isFuture={false} isNew={true} />
+                                        <BookCard key={`recent-${idx}`} book={book} author={author} idx={idx} isFuture={false} isNew={true} copiedBookIdx={copiedBookIdx} books={books} handleCopy={handleCopy} addBook={addBook} />
                                       ))}
                                     </div>
                                   )}
 
                                   {/* Complete Bibliography */}
                                   <div className="space-y-3">
-                                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-2">
+                                    <h5 className="text-xs font-bold text-theme-text-secondary uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-2">
                                       <Book className="w-3 h-3" /> Complete Bibliography
                                     </h5>
                                     {author.bibliography.filter(b => !isFutureRelease(b.releaseDate) && !isNewRelease(b.releaseDate)).map((book, idx) => (
-                                      <BookCard key={`older-${idx}`} book={book} author={author} idx={idx} isFuture={false} isNew={false} />
+                                      <BookCard key={`older-${idx}`} book={book} author={author} idx={idx} isFuture={false} isNew={false} copiedBookIdx={copiedBookIdx} books={books} handleCopy={handleCopy} addBook={addBook} />
                                     ))}
                                   </div>
 
                                 </div>
                               </div>
                             </div>
+                            </div>
                             
                             {(pulseData[author.id] || loadingPulse === author.id) && (
                               <div className="mt-6 pt-6 border-t border-white/5">
-                                <h4 className="text-sm font-medium text-amber-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <h4 className="text-sm font-medium text-theme-warning uppercase tracking-wider mb-3 flex items-center gap-2">
                                   <Activity className="w-4 h-4" />
                                   Author Pulse
                                 </h4>
                                 {loadingPulse === author.id ? (
-                                  <div className="flex items-center gap-3 text-slate-400 text-sm py-4">
-                                    <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                                  <div className="flex items-center gap-3 text-theme-text-secondary text-sm py-4">
+                                    <Loader2 className="w-4 h-4 animate-spin text-theme-warning" />
                                     Deep-researching latest news and releases...
                                   </div>
                                 ) : (
-                                  <div className="bg-slate-900/50 p-5 rounded-xl border border-white/5 markdown-body text-sm">
+                                  <div className="bg-theme-surface/50 p-5 rounded-xl border border-white/5 markdown-body text-sm">
                                     <Markdown>{pulseData[author.id]}</Markdown>
                                   </div>
                                 )}
@@ -649,7 +812,7 @@ export default function MyAuthors() {
                   )}
                 </AnimatePresence>
               </motion.div>
-            ))}
+            ); })}
           </motion.div>
         )}
       </div>

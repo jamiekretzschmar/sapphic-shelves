@@ -6,8 +6,8 @@ export const getGoogleBooksCoverUrl = async (title: string, author: string): Pro
   try {
     const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(title)}+inauthor:${encodeURIComponent(author)}&maxResults=1`);
     const data = await response.json();
-    if (data.items && data.items[0] && data.items[0].volumeInfo.imageLinks) {
-      return data.items[0].volumeInfo.imageLinks.thumbnail || data.items[0].volumeInfo.imageLinks.smallThumbnail;
+    if (data.items?.[0]?.volumeInfo?.imageLinks) {
+      return data.items[0].volumeInfo.imageLinks.thumbnail || data.items[0].volumeInfo.imageLinks.smallThumbnail || null;
     }
   } catch (error) {
     console.error("Error fetching cover from Google Books:", error);

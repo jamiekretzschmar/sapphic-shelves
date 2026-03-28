@@ -22,6 +22,7 @@ export default function Library() {
   const [suggestedTags, setSuggestedTags] = useState<Record<string, Record<string, string[]>>>({});
   const [isSuggestingTags, setIsSuggestingTags] = useState<Record<string, boolean>>({});
   const [isGeneratingCover, setIsGeneratingCover] = useState<Record<string, boolean>>({});
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('3:4');
   const [addingAuthor, setAddingAuthor] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -77,7 +78,7 @@ export default function Library() {
           comparison = (a.rating || 0) - (b.rating || 0);
           break;
         case 'dateAdded':
-          comparison = (a.id || '').localeCompare(b.id || ''); // Using ID as proxy for date added if not available
+          comparison = (a.dateAdded || '').localeCompare(b.dateAdded || '');
           break;
         case 'status':
           comparison = a.status.localeCompare(b.status);
@@ -185,7 +186,7 @@ export default function Library() {
     });
 
     try {
-      const coverUrl = await generateBookCover(title, author);
+      const coverUrl = await generateBookCover(title, author, selectedAspectRatio as any);
       if (coverUrl) {
         updateBook(id, { coverUrl });
       }
@@ -263,6 +264,30 @@ export default function Library() {
     }));
   };
 
+  const handleEnrichMissing = async () => {
+    const booksToEnrich = books.filter(b => !b.description);
+    if (booksToEnrich.length === 0) return;
+
+    const taskId = addTask({
+      name: `Enriching ${booksToEnrich.length} missing descriptions`,
+      status: 'processing',
+      progress: 0
+    });
+
+    for (let i = 0; i < booksToEnrich.length; i++) {
+      const book = booksToEnrich[i];
+      try {
+        const data = await enrichBookData(book.title, book.author);
+        updateBook(book.id, data);
+      } catch (e) {
+        console.error("Failed to enrich", book.title);
+      }
+      updateTask(taskId, { progress: Math.round(((i + 1) / booksToEnrich.length) * 100) });
+    }
+
+    updateTask(taskId, { status: 'completed' });
+  };
+
   const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBook.title || !newBook.author) return;
@@ -335,20 +360,27 @@ export default function Library() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-earth-900 dark:text-earth-50 flex items-center gap-2">
-          <BookIcon className="w-6 h-6 text-mustard-600 dark:text-mustard-400" />
+        <h2 className="text-2xl font-bold text-theme-text flex items-center gap-2">
+          <BookIcon className="w-6 h-6 text-theme-accent1 dark:text-theme-accent1" />
           My Library
         </h2>
         <div className="flex gap-2">
           <button 
             onClick={clearFilters}
-            className="bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 text-earth-700 dark:text-earth-300 px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
+            className="bg-theme-bg hover:bg-theme-surface text-theme-text-secondary px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
           >
             <RotateCcw className="w-4 h-4" /> Clear Filters
           </button>
           <button 
+            onClick={handleEnrichMissing}
+            className="bg-theme-accent2 hover:bg-theme-accent2 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
+            title="Fetch missing descriptions for all books"
+          >
+            <Sparkles className="w-4 h-4" /> Enrich Missing
+          </button>
+          <button 
             onClick={() => setIsAdding(!isAdding)}
-            className="bg-mustard-600 hover:bg-mustard-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+            className="bg-theme-accent1 hover:bg-theme-accent1 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
           >
             {isAdding ? 'Cancel' : 'Add Book'}
           </button>
@@ -369,21 +401,21 @@ export default function Library() {
                 placeholder="Title" 
                 value={newBook.title}
                 onChange={e => setNewBook({ ...newBook, title: e.target.value })}
-                className="flex-1 bg-white dark:bg-earth-900/50 border border-earth-200 dark:border-earth-800 rounded-xl px-4 py-2 text-earth-900 dark:text-earth-100 focus:outline-none focus:border-mustard-500/50"
+                className="flex-1 bg-theme-surface border border-theme-border rounded-xl px-4 py-2 text-theme-text focus:outline-none focus:border-theme-accent1/50"
               />
               <input 
                 type="text" 
                 placeholder="Author" 
                 value={newBook.author}
                 onChange={e => setNewBook({ ...newBook, author: e.target.value })}
-                className="flex-1 bg-white dark:bg-earth-900/50 border border-earth-200 dark:border-earth-800 rounded-xl px-4 py-2 text-earth-900 dark:text-earth-100 focus:outline-none focus:border-mustard-500/50"
+                className="flex-1 bg-theme-surface border border-theme-border rounded-xl px-4 py-2 text-theme-text focus:outline-none focus:border-theme-accent1/50"
               />
-              <button type="submit" className="bg-sage-600 hover:bg-sage-500 text-white px-6 py-2 rounded-xl font-medium transition-colors">
+              <button type="submit" className="bg-theme-accent2 hover:bg-theme-accent2 text-white px-6 py-2 rounded-xl font-medium transition-colors">
                 Save
               </button>
             </form>
             {addError && (
-              <p className="text-red-600 dark:text-red-400 text-sm font-medium px-2">{addError}</p>
+              <p className="text-theme-danger text-sm font-medium px-2">{addError}</p>
             )}
           </motion.div>
         )}
@@ -391,20 +423,20 @@ export default function Library() {
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="relative sm:col-span-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-earth-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-text-secondary" />
           <input
             type="text"
             placeholder="Quick search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-xl py-2 pl-10 pr-4 text-earth-900 dark:text-earth-100 focus:outline-none focus:border-mustard-500/50"
+            className="w-full bg-theme-surface border border-theme-border rounded-xl py-2 pl-10 pr-4 text-theme-text focus:outline-none focus:border-theme-accent1/50"
           />
         </div>
         <div className="flex gap-2 sm:col-span-3">
           <select 
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="flex-1 bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-xl px-4 py-2 text-earth-900 dark:text-earth-100 focus:outline-none focus:border-mustard-500/50 appearance-none"
+            className="flex-1 bg-theme-surface border border-theme-border rounded-xl px-4 py-2 text-theme-text focus:outline-none focus:border-theme-accent1/50 appearance-none"
           >
             <option value="All">All Statuses</option>
             <option value="Wishlist">Wishlist</option>
@@ -412,11 +444,11 @@ export default function Library() {
             <option value="Read">Read</option>
             <option value="Ignored">Ignored</option>
           </select>
-          <div className="flex-1 flex gap-1 bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-xl px-2 py-1">
+          <div className="flex-1 flex gap-1 bg-theme-surface border border-theme-border rounded-xl px-2 py-1">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="flex-1 bg-transparent text-earth-900 dark:text-earth-100 text-sm focus:outline-none appearance-none px-2"
+              className="flex-1 bg-transparent text-theme-text text-sm focus:outline-none appearance-none px-2"
             >
               <option value="title">Sort by Title</option>
               <option value="author">Sort by Author</option>
@@ -426,7 +458,7 @@ export default function Library() {
             </select>
             <button
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-1 text-earth-500 hover:text-mustard-600 dark:hover:text-mustard-400 transition-colors"
+              className="p-1 text-theme-text-secondary hover:text-theme-accent1 dark:hover:text-theme-accent1 transition-colors"
               title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
             >
               <SortAsc className={`w-4 h-4 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
@@ -434,7 +466,7 @@ export default function Library() {
           </div>
           <button 
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 border ${showAdvanced ? 'bg-mustard-500/20 border-mustard-500/50 text-mustard-700 dark:text-mustard-300' : 'bg-white dark:bg-earth-900 border-earth-200 dark:border-earth-800 text-earth-600 dark:text-earth-400 hover:border-mustard-500/30'}`}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 border ${showAdvanced ? 'bg-theme-accent1/20 border-theme-accent1/50 text-mustard-700 dark:text-theme-accent1' : 'bg-theme-surface border-theme-border text-theme-text-secondary hover:border-theme-accent1/30'}`}
           >
             <Filter className="w-4 h-4" />
             <span className="hidden sm:inline">Advanced</span>
@@ -450,9 +482,9 @@ export default function Library() {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="bg-white dark:bg-earth-900/50 border border-earth-200 dark:border-earth-800 rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-theme-surface border border-theme-border rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-earth-500 uppercase tracking-widest flex items-center gap-2">
+                <label className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-widest flex items-center gap-2">
                   <TagIcon className="w-3 h-3" /> Genre
                 </label>
                 <input 
@@ -460,11 +492,11 @@ export default function Library() {
                   placeholder="e.g. Fantasy, Romance..."
                   value={genreFilter}
                   onChange={e => setGenreFilter(e.target.value)}
-                  className="w-full bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-xl px-4 py-2 text-earth-900 dark:text-earth-100 focus:outline-none focus:border-mustard-500/50"
+                  className="w-full bg-theme-surface border border-theme-border rounded-xl px-4 py-2 text-theme-text focus:outline-none focus:border-theme-accent1/50"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-earth-500 uppercase tracking-widest flex items-center gap-2">
+                <label className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-widest flex items-center gap-2">
                   <UserPlus className="w-3 h-3" /> Author Name
                 </label>
                 <input 
@@ -472,11 +504,11 @@ export default function Library() {
                   placeholder="Filter by author..."
                   value={authorFilter}
                   onChange={e => setAuthorFilter(e.target.value)}
-                  className="w-full bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-xl px-4 py-2 text-earth-900 dark:text-earth-100 focus:outline-none focus:border-mustard-500/50"
+                  className="w-full bg-theme-surface border border-theme-border rounded-xl px-4 py-2 text-theme-text focus:outline-none focus:border-theme-accent1/50"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-earth-500 uppercase tracking-widest flex items-center gap-2">
+                <label className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-widest flex items-center gap-2">
                   <Calendar className="w-3 h-3" /> Publication Year Range
                 </label>
                 <div className="flex items-center gap-2">
@@ -485,20 +517,20 @@ export default function Library() {
                     placeholder="From"
                     value={yearStart}
                     onChange={e => setYearStart(e.target.value)}
-                    className="w-1/2 bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-xl px-4 py-2 text-earth-900 dark:text-earth-100 focus:outline-none focus:border-mustard-500/50"
+                    className="w-1/2 bg-theme-surface border border-theme-border rounded-xl px-4 py-2 text-theme-text focus:outline-none focus:border-theme-accent1/50"
                   />
-                  <span className="text-earth-600 dark:text-earth-400">—</span>
+                  <span className="text-theme-text-secondary">—</span>
                   <input 
                     type="number"
                     placeholder="To"
                     value={yearEnd}
                     onChange={e => setYearEnd(e.target.value)}
-                    className="w-1/2 bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-xl px-4 py-2 text-earth-900 dark:text-earth-100 focus:outline-none focus:border-mustard-500/50"
+                    className="w-1/2 bg-theme-surface border border-theme-border rounded-xl px-4 py-2 text-theme-text focus:outline-none focus:border-theme-accent1/50"
                   />
                 </div>
               </div>
               <div className="md:col-span-3 space-y-2">
-                <label className="text-[10px] font-bold text-earth-500 uppercase tracking-widest flex items-center gap-2">
+                <label className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-widest flex items-center gap-2">
                   <Type className="w-3 h-3" /> Keywords (Title or Synopsis)
                 </label>
                 <input 
@@ -506,7 +538,7 @@ export default function Library() {
                   placeholder="Search for keywords in title or description..."
                   value={keywordFilter}
                   onChange={e => setKeywordFilter(e.target.value)}
-                  className="w-full bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-xl px-4 py-2 text-earth-900 dark:text-earth-100 focus:outline-none focus:border-mustard-500/50"
+                  className="w-full bg-theme-surface border border-theme-border rounded-xl px-4 py-2 text-theme-text focus:outline-none focus:border-theme-accent1/50"
                 />
               </div>
             </div>
@@ -516,15 +548,15 @@ export default function Library() {
 
       {/* Tag Filter */}
       {tags.length > 0 && (
-        <div className="bg-white dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-xl p-4">
+        <div className="bg-theme-surface border border-theme-border rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-earth-800 dark:text-earth-200 flex items-center gap-2">
+            <h3 className="text-sm font-medium text-theme-text flex items-center gap-2">
               <Filter className="w-4 h-4" /> Filter by Tags
             </h3>
             {(includedTags.size > 0 || excludedTags.size > 0) && (
               <button 
                 onClick={() => { setIncludedTags(new Set()); setExcludedTags(new Set()); }}
-                className="text-[10px] font-bold uppercase tracking-widest text-mustard-600 dark:text-mustard-400 hover:text-mustard-700 dark:hover:text-mustard-300 transition-colors"
+                className="text-[10px] font-bold uppercase tracking-widest text-theme-accent1 dark:text-theme-accent1 hover:text-mustard-700 dark:hover:text-theme-accent1 transition-colors"
               >
                 Clear Tags
               </button>
@@ -540,9 +572,9 @@ export default function Library() {
                   key={tag.id}
                   onClick={() => toggleTagFilter(tag.id)}
                   className={`text-xs px-3 py-1.5 rounded-lg border transition-all flex items-center gap-2
-                    ${isIncluded ? 'bg-sage-500/20 border-sage-500/50 text-sage-700 dark:text-sage-300' : 
-                      isExcluded ? 'bg-red-500/20 border-red-500/50 text-red-700 dark:text-red-300 opacity-70' : 
-                      'bg-earth-100 dark:bg-earth-800 border-earth-200 dark:border-earth-700 text-earth-600 dark:text-earth-400 hover:bg-earth-200 dark:hover:bg-earth-700'}`}
+                    ${isIncluded ? 'bg-theme-accent2/20 border-theme-accent2/50 text-theme-accent2' : 
+                      isExcluded ? 'bg-theme-danger/20 border-theme-danger/50 text-theme-danger opacity-70' : 
+                      'bg-theme-bg border-theme-border text-theme-text-secondary hover:bg-theme-surface'}`}
                 >
                   {isIncluded ? <CheckSquare className="w-3.5 h-3.5" /> : 
                    isExcluded ? <XCircle className="w-3.5 h-3.5" /> : 
@@ -552,28 +584,28 @@ export default function Library() {
               );
             })}
           </div>
-          <div className="mt-3 flex gap-4 text-[10px] text-earth-500 font-medium uppercase tracking-wider">
-            <div className="flex items-center gap-1.5"><CheckSquare className="w-3 h-3 text-sage-500" /> Include</div>
-            <div className="flex items-center gap-1.5"><XCircle className="w-3 h-3 text-red-500" /> Exclude</div>
-            <div className="flex items-center gap-1.5"><Square className="w-3 h-3 text-earth-400 dark:text-earth-600" /> Neutral</div>
+          <div className="mt-3 flex gap-4 text-[10px] text-theme-text-secondary font-medium uppercase tracking-wider">
+            <div className="flex items-center gap-1.5"><CheckSquare className="w-3 h-3 text-theme-accent2" /> Include</div>
+            <div className="flex items-center gap-1.5"><XCircle className="w-3 h-3 text-theme-danger" /> Exclude</div>
+            <div className="flex items-center gap-1.5"><Square className="w-3 h-3 text-theme-text-secondary" /> Neutral</div>
           </div>
         </div>
       )}
 
       {selectedBooks.size > 0 && (
-        <div className="bg-mustard-500/10 border border-mustard-500/20 rounded-xl p-3 flex flex-wrap items-center gap-4">
-          <span className="text-mustard-700 dark:text-mustard-300 font-medium text-sm">{selectedBooks.size} selected</span>
+        <div className="bg-theme-accent1/10 border border-theme-accent1/20 rounded-xl p-3 flex flex-wrap items-center gap-4">
+          <span className="text-mustard-700 dark:text-theme-accent1 font-medium text-sm">{selectedBooks.size} selected</span>
           <div className="flex gap-2 flex-wrap">
-            <button onClick={() => handleBulkStatus('Read')} className="text-xs bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 px-3 py-1.5 rounded-lg transition-colors">Mark Read</button>
-            <button onClick={() => handleBulkStatus('Reading')} className="text-xs bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 px-3 py-1.5 rounded-lg transition-colors">Mark Reading</button>
-            <button onClick={() => handleBulkStatus('Wishlist')} className="text-xs bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 px-3 py-1.5 rounded-lg transition-colors">To Wishlist</button>
-            <button onClick={() => handleBulkStatus('Ignored')} className="text-xs bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 px-3 py-1.5 rounded-lg transition-colors">Ignore</button>
-            <button onClick={handleBulkEnrich} className="text-xs bg-earth-100 dark:bg-earth-800 hover:bg-earth-200 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><ImageIcon className="w-3 h-3"/> Auto-Enrich</button>
-            <button onClick={handleBulkDelete} className="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><Trash2 className="w-3 h-3"/> Delete</button>
+            <button onClick={() => handleBulkStatus('Read')} className="text-xs bg-theme-bg hover:bg-theme-surface text-theme-text px-3 py-1.5 rounded-lg transition-colors">Mark Read</button>
+            <button onClick={() => handleBulkStatus('Reading')} className="text-xs bg-theme-bg hover:bg-theme-surface text-theme-text px-3 py-1.5 rounded-lg transition-colors">Mark Reading</button>
+            <button onClick={() => handleBulkStatus('Wishlist')} className="text-xs bg-theme-bg hover:bg-theme-surface text-theme-text px-3 py-1.5 rounded-lg transition-colors">To Wishlist</button>
+            <button onClick={() => handleBulkStatus('Ignored')} className="text-xs bg-theme-bg hover:bg-theme-surface text-theme-text px-3 py-1.5 rounded-lg transition-colors">Ignore</button>
+            <button onClick={handleBulkEnrich} className="text-xs bg-theme-bg hover:bg-theme-surface text-theme-text px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><ImageIcon className="w-3 h-3"/> Auto-Enrich</button>
+            <button onClick={handleBulkDelete} className="text-xs bg-theme-danger/20 hover:bg-theme-danger/30 text-theme-danger px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><Trash2 className="w-3 h-3"/> Delete</button>
           </div>
-          <div className="flex gap-2 flex-wrap border-l border-earth-200 dark:border-earth-800 pl-4">
+          <div className="flex gap-2 flex-wrap border-l border-theme-border pl-4">
             <select
-              className="bg-earth-100 dark:bg-earth-800 text-earth-800 dark:text-earth-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
+              className="bg-theme-bg text-theme-text text-xs rounded-lg px-2 py-1.5 focus:outline-none"
               onChange={(e) => {
                 const tagId = e.target.value;
                 if (!tagId) return;
@@ -592,7 +624,7 @@ export default function Library() {
               {tags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
             <select
-              className="bg-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
+              className="bg-theme-border text-theme-text text-xs rounded-lg px-2 py-1.5 focus:outline-none"
               onChange={(e) => {
                 const tagId = e.target.value;
                 if (!tagId) return;
@@ -614,10 +646,10 @@ export default function Library() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {filteredBooks.length > 0 && (
-          <div className="col-span-full flex items-center px-4 py-2 text-sm text-slate-500">
-            <button onClick={toggleSelectAll} className="mr-4 hover:text-slate-300">
+          <div className="col-span-full flex items-center px-4 py-2 text-sm text-theme-text-secondary">
+            <button onClick={toggleSelectAll} className="mr-4 hover:text-theme-text-secondary">
               {selectedBooks.size === filteredBooks.length ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
             </button>
             <span className="flex-1">Library ({filteredBooks.length})</span>
@@ -625,25 +657,28 @@ export default function Library() {
         )}
         
         {filteredBooks.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-earth-500 dark:text-earth-400 bg-earth-100/50 dark:bg-earth-900/30 rounded-3xl border border-earth-200 dark:border-earth-800 border-dashed">
+          <div className="col-span-full text-center py-12 text-theme-text-secondary bg-theme-bg rounded-3xl border border-theme-border border-dashed">
             <BookIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>No books found.</p>
             {(search || statusFilter !== 'All' || includedTags.size > 0 || excludedTags.size > 0) && (
-              <button onClick={clearFilters} className="mt-4 text-mustard-600 dark:text-mustard-400 hover:text-mustard-700 dark:hover:text-mustard-300 text-sm font-medium">Clear all filters</button>
+              <button onClick={clearFilters} className="mt-4 text-theme-accent1 dark:text-theme-accent1 hover:text-mustard-700 dark:hover:text-theme-accent1 text-sm font-medium">Clear all filters</button>
             )}
           </div>
         ) : (
-          filteredBooks.map(book => {
+          filteredBooks.map((book, index) => {
             const isExpanded = expandedBook === book.id;
-            const links = getStoreLinks(book.title, book.author);            return (
+            const links = getStoreLinks(book.title, book.author);
+            const cardColorClass = index % 3 === 0 ? 'bg-theme-card-blue' : index % 3 === 1 ? 'bg-theme-card-yellow' : 'bg-theme-card-olive';
+            const hoverColorClass = index % 3 === 0 ? 'hover:bg-theme-earth-blue-light' : index % 3 === 1 ? 'hover:bg-theme-earth-yellow-light' : 'hover:bg-theme-earth-olive-green-light';
+
+            return (
               <React.Fragment key={book.id}>
                 <motion.div 
-                  key={book.id} 
                   layout
-                  className={`flex flex-col rounded-2xl border transition-all overflow-hidden ${selectedBooks.has(book.id) ? 'bg-mustard-500/5 border-mustard-500/30 ring-1 ring-mustard-500/50' : 'bg-white/60 dark:bg-earth-900/60 backdrop-blur-sm border-earth-200 dark:border-earth-800 hover:border-earth-300 dark:hover:border-earth-700 hover:shadow-soft-lg hover:-translate-y-1'}`}
+                  className={`flex flex-col rounded-2xl border transition-all overflow-hidden ${selectedBooks.has(book.id) ? 'bg-theme-accent1/5 border-theme-accent1/30 ring-1 ring-theme-accent1/50' : `${cardColorClass} border-theme-border hover:border-theme-border hover:shadow-soft-lg hover:-translate-y-1 ${hoverColorClass}`}`}
                 >
                   {/* Top section: Cover + Actions overlay */}
-                  <div className="relative aspect-[3/4] w-full bg-earth-100 dark:bg-earth-800 group cursor-pointer" onClick={() => handleExpand(book.id)}>
+                  <div className="relative aspect-[3/4] w-full bg-theme-bg group cursor-pointer" onClick={() => handleExpand(book.id)}>
                     <BookCover 
                       title={book.title} 
                       author={book.author} 
@@ -652,18 +687,36 @@ export default function Library() {
                     />
                     
                     {/* Hover actions for cover */}
-                    <div className="absolute inset-0 bg-earth-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4 z-20">
+                    <div className="absolute inset-0 bg-theme-bg/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4 z-20">
                         <button
                           onClick={(e) => handleEnrichSingle(e, book.id, book.title, book.author)}
-                          className="w-full py-2 rounded-xl bg-mustard-500/20 hover:bg-mustard-500/40 text-xs font-bold uppercase text-mustard-300 transition-colors flex items-center justify-center gap-2"
+                          className="w-full py-2 rounded-xl bg-theme-accent1/20 hover:bg-theme-accent1/40 text-xs font-bold uppercase text-theme-accent1 transition-colors flex items-center justify-center gap-2"
                           title="Search web for cover"
                         >
                           <Search className="w-4 h-4" /> Fetch Cover
                         </button>
+                        <div className="w-full flex flex-col gap-1">
+                          <label className="text-[8px] font-bold text-theme-text-secondary uppercase tracking-widest text-center">Aspect Ratio</label>
+                          <select 
+                            value={selectedAspectRatio}
+                            onChange={(e) => setSelectedAspectRatio(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full py-1.5 rounded-xl bg-theme-bg/80 text-[10px] font-bold text-theme-text border border-white/10 focus:outline-none focus:border-theme-accent2/50"
+                          >
+                            <option value="1:1">1:1 Square</option>
+                            <option value="2:3">2:3 Portrait</option>
+                            <option value="3:2">3:2 Landscape</option>
+                            <option value="3:4">3:4 Book</option>
+                            <option value="4:3">4:3 Classic</option>
+                            <option value="9:16">9:16 Story</option>
+                            <option value="16:9">16:9 Wide</option>
+                            <option value="21:9">21:9 Cinema</option>
+                          </select>
+                        </div>
                         <button
                           onClick={(e) => handleGenerateCover(e, book.id, book.title, book.author)}
                           disabled={isGeneratingCover[book.id]}
-                          className="w-full py-2 rounded-xl bg-sage-500/20 hover:bg-sage-500/40 text-xs font-bold uppercase text-sage-300 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                          className="w-full py-2 rounded-xl bg-theme-accent2/20 hover:bg-theme-accent2/40 text-xs font-bold uppercase text-theme-accent2 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                           title="Generate AI cover"
                         >
                           {isGeneratingCover[book.id] ? <LogoLoader size={16} /> : <ImageIcon className="w-4 h-4" />} Gen Cover
@@ -671,31 +724,31 @@ export default function Library() {
                       </div>
 
                     {/* Gradient Overlay for text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-earth-950 via-earth-900/20 to-transparent opacity-90 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-theme-bg via-theme-bg/20 to-transparent opacity-90 pointer-events-none" />
 
                     {/* Selection Checkbox */}
-                    <button onClick={(e) => { e.stopPropagation(); toggleSelect(book.id); }} className="absolute top-3 left-3 z-10 p-1.5 rounded-lg bg-earth-950/50 backdrop-blur-md border border-white/10 text-earth-300 hover:text-mustard-400 transition-colors">
-                      {selectedBooks.has(book.id) ? <CheckSquare className="w-4 h-4 text-mustard-400" /> : <Square className="w-4 h-4" />}
+                    <button onClick={(e) => { e.stopPropagation(); toggleSelect(book.id); }} className="absolute top-3 left-3 z-10 p-1.5 rounded-lg bg-theme-bg/50 backdrop-blur-md border border-white/10 text-theme-text-secondary hover:text-theme-accent1 transition-colors">
+                      {selectedBooks.has(book.id) ? <CheckSquare className="w-4 h-4 text-theme-accent1" /> : <Square className="w-4 h-4" />}
                     </button>
 
                     {/* Quick Action Icons (Top Right) */}
                     <div className="absolute top-3 right-3 z-10 flex flex-col gap-2" onClick={e => e.stopPropagation()}>
-                      <a href={links.playStore} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-earth-950/60 backdrop-blur-md border border-white/10 text-earth-300 hover:text-blue-400 hover:border-blue-400/50 transition-all shadow-soft" title="Google Play Books">
+                      <a href={links.playStore} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-theme-bg/60 backdrop-blur-md border border-white/10 text-theme-text-secondary hover:text-theme-accent1 hover:border-theme-accent1/50 transition-all shadow-soft" title="Google Play Books">
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
-                      <a href={links.kindle} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-earth-950/60 backdrop-blur-md border border-white/10 text-earth-300 hover:text-amber-400 hover:border-amber-400/50 transition-all shadow-soft" title="Amazon Kindle">
+                      <a href={links.kindle} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-theme-bg/60 backdrop-blur-md border border-white/10 text-theme-text-secondary hover:text-theme-warning hover:border-theme-warning/50 transition-all shadow-soft" title="Amazon Kindle">
                         <Bookmark className="w-3.5 h-3.5" />
                       </a>
                     </div>
 
                     {/* Title & Author Overlay (Bottom) */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                      <h4 className="font-bold text-earth-100 text-lg leading-tight mb-1 line-clamp-2">{book.title}</h4>
+                      <h4 className="font-bold text-theme-text-secondary text-lg md:text-xl leading-tight mb-1 line-clamp-2">{book.title}</h4>
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm text-earth-300 font-medium truncate">{book.author}</p>
+                        <p className="text-sm md:text-base text-theme-text-secondary font-medium truncate">{book.author}</p>
                         <div className="flex items-center gap-1 shrink-0">
                           {book.publicationYear && (
-                            <span className="text-[10px] font-mono text-earth-300 bg-earth-800/80 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/10">
+                            <span className="text-[10px] font-mono text-theme-text-secondary bg-theme-bg/80 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/10">
                               {book.publicationYear}
                             </span>
                           )}
@@ -703,7 +756,7 @@ export default function Library() {
                             <button
                               onClick={(e) => handleAddAuthor(e, book.author)}
                               disabled={addingAuthor === book.author}
-                              className="p-1 rounded-md bg-mustard-500/20 text-mustard-400 hover:bg-mustard-500/40 transition-colors backdrop-blur-sm"
+                              className="p-1 rounded-md bg-theme-accent1/20 text-theme-accent1 hover:bg-theme-accent1/40 transition-colors backdrop-blur-sm"
                               title="Quick add author to tracking"
                             >
                               {addingAuthor === book.author ? (
@@ -713,7 +766,7 @@ export default function Library() {
                               )}
                             </button>
                           ) : (
-                            <div className="p-1 rounded-md bg-sage-500/20 text-sage-400 backdrop-blur-sm" title="Author is tracked">
+                            <div className="p-1 rounded-md bg-theme-accent2/20 text-theme-accent2 backdrop-blur-sm" title="Author is tracked">
                               <Check className="w-3 h-3" />
                             </div>
                           )}
@@ -723,15 +776,15 @@ export default function Library() {
                   </div>
 
                   {/* Quick Status Actions (Below Cover) */}
-                  <div className="p-3 border-b border-earth-200 dark:border-earth-800 flex items-center justify-between gap-2 bg-earth-50 dark:bg-earth-950/30">
+                  <div className="p-3 border-b border-theme-border flex items-center justify-between gap-2 bg-theme-bg">
                     <div className="flex gap-2 w-full">
-                      <button onClick={(e) => handleStatusChange(e, book.id, 'Wishlist')} className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${book.status === 'Wishlist' ? 'bg-mustard-500/20 text-mustard-600 dark:text-mustard-400 border border-mustard-500/30' : 'bg-earth-100 dark:bg-earth-800 text-earth-600 dark:text-earth-400 hover:bg-earth-200 dark:hover:bg-earth-700'}`}>
+                      <button onClick={(e) => handleStatusChange(e, book.id, 'Wishlist')} className={`flex-1 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${book.status === 'Wishlist' ? 'bg-theme-accent2/20 text-theme-accent2 border border-theme-accent2/30' : 'bg-theme-bg text-theme-text-secondary hover:bg-theme-surface'}`}>
                         <Plus className="w-3 h-3" /> Wish
                       </button>
-                      <button onClick={(e) => handleStatusChange(e, book.id, 'Reading')} className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${book.status === 'Reading' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30' : 'bg-earth-100 dark:bg-earth-800 text-earth-600 dark:text-earth-400 hover:bg-earth-200 dark:hover:bg-earth-700'}`}>
+                      <button onClick={(e) => handleStatusChange(e, book.id, 'Reading')} className={`flex-1 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${book.status === 'Reading' ? 'bg-theme-accent1/20 text-theme-accent1 border border-theme-accent1/30' : 'bg-theme-bg text-theme-text-secondary hover:bg-theme-surface'}`}>
                         <BookOpen className="w-3 h-3" /> Read<span className="hidden sm:inline">ing</span>
                       </button>
-                      <button onClick={(e) => handleStatusChange(e, book.id, 'Read')} className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${book.status === 'Read' ? 'bg-sage-500/20 text-sage-600 dark:text-sage-400 border border-sage-500/30' : 'bg-earth-100 dark:bg-earth-800 text-earth-600 dark:text-earth-400 hover:bg-earth-200 dark:hover:bg-earth-700'}`}>
+                      <button onClick={(e) => handleStatusChange(e, book.id, 'Read')} className={`flex-1 py-2 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${book.status === 'Read' ? 'bg-theme-accent1/20 text-theme-accent1 border border-theme-accent1/30' : 'bg-theme-bg text-theme-text-secondary hover:bg-theme-surface'}`}>
                         <Check className="w-3 h-3" /> Read
                       </button>
                     </div>
@@ -745,22 +798,22 @@ export default function Library() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-50 bg-white dark:bg-earth-950 p-4 sm:p-8 overflow-y-auto"
+                      className="fixed inset-0 z-50 bg-white dark:bg-theme-bg p-4 sm:p-8 overflow-y-auto"
                     >
                       <div className="max-w-3xl mx-auto">
-                        <button onClick={() => setExpandedBook(null)} className="mb-4 text-earth-500 hover:text-earth-900 dark:hover:text-earth-100">Close</button>
+                        <button onClick={() => setExpandedBook(null)} className="mb-4 text-theme-text-secondary hover:text-theme-text transition-colors">Close</button>
                         <div className="p-4 space-y-4">
                         {/* Rating Stars */}
                         <div className="flex items-center justify-between">
-                          <h5 className="text-xs font-bold text-mustard-600 dark:text-mustard-400 uppercase tracking-wider">Rating</h5>
+                          <h5 className="text-xs font-bold text-theme-accent1 dark:text-theme-accent1 uppercase tracking-wider">Rating</h5>
                           <div className="flex items-center gap-1">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <button 
                                 key={star}
                                 onClick={(e) => handleRating(e, book.id, star)}
-                                className={`p-1 transition-colors ${book.rating && book.rating >= star ? 'text-amber-400' : 'text-earth-400 dark:text-earth-600 hover:text-amber-400/50'}`}
+                                className={`p-1 transition-colors ${book.rating && book.rating >= star ? 'text-theme-warning' : 'text-theme-text-secondary hover:text-theme-warning/50'}`}
                               >
-                                <Star className={`w-4 h-4 ${book.rating && book.rating >= star ? 'fill-amber-400' : ''}`} />
+                                <Star className={`w-4 h-4 ${book.rating && book.rating >= star ? 'fill-theme-warning' : ''}`} />
                               </button>
                             ))}
                           </div>
@@ -768,17 +821,17 @@ export default function Library() {
 
                         {/* Synopsis */}
                         <div>
-                          <h5 className="text-xs font-bold text-mustard-600 dark:text-mustard-400 uppercase tracking-wider mb-2">Synopsis</h5>
+                          <h5 className="text-xs font-bold text-theme-accent1 dark:text-theme-accent1 uppercase tracking-wider mb-2">Synopsis</h5>
                           {book.description ? (
-                            <p className="text-sm text-earth-700 dark:text-earth-300 leading-relaxed">
+                            <p className="text-sm text-theme-text-secondary leading-relaxed">
                               {book.description}
                             </p>
                           ) : (
                             <div className="flex items-center gap-3">
-                              <span className="text-earth-500 italic text-sm">No synopsis available.</span>
+                              <span className="text-theme-text-secondary italic text-sm">No synopsis available.</span>
                               <button
                                 onClick={(e) => handleEnrichSingle(e, book.id, book.title, book.author)}
-                                className="text-xs bg-mustard-500/10 hover:bg-mustard-500/20 text-mustard-600 dark:text-mustard-400 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                                className="text-xs bg-theme-accent1/10 hover:bg-theme-accent1/20 text-theme-accent1 dark:text-theme-accent1 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
                               >
                                 <Sparkles className="w-3 h-3" /> Auto-fetch Synopsis
                               </button>
@@ -788,23 +841,23 @@ export default function Library() {
 
                         {/* Notes */}
                         <div>
-                          <h5 className="text-xs font-bold text-mustard-600 dark:text-mustard-400 uppercase tracking-wider mb-2">Notes</h5>
+                          <h5 className="text-xs font-bold text-theme-accent1 dark:text-theme-accent1 uppercase tracking-wider mb-2">Notes</h5>
                           <textarea
                             value={book.notes || ''}
                             onChange={(e) => updateBook(book.id, { notes: e.target.value })}
                             placeholder="Add your notes here..."
-                            className="w-full bg-earth-100/50 dark:bg-earth-900/50 border border-earth-200 dark:border-earth-800 rounded-xl px-4 py-2 text-sm text-earth-800 dark:text-earth-200 focus:outline-none focus:border-mustard-500/50 min-h-[80px]"
+                            className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-2 text-sm text-theme-text focus:outline-none focus:border-theme-accent1/50 min-h-[80px]"
                           />
                         </div>
 
                         {/* Tags */}
-                        <div className="mt-4 pt-4 border-t border-earth-200 dark:border-earth-800">
+                        <div className="mt-4 pt-4 border-t border-theme-border">
                           <div className="flex items-center justify-between mb-2">
-                            <h5 className="text-xs font-bold text-mustard-600 dark:text-mustard-400 uppercase tracking-wider">Tags</h5>
+                            <h5 className="text-xs font-bold text-theme-accent1 dark:text-theme-accent1 uppercase tracking-wider">Tags</h5>
                             <button
                               onClick={(e) => handleSuggestTags(e, book.id, book.title, book.author, book.description)}
                               disabled={isSuggestingTags[book.id]}
-                              className="text-xs bg-sage-500/10 hover:bg-sage-500/20 text-sage-600 dark:text-sage-400 px-2 py-1 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50"
+                              className="text-xs bg-theme-accent2/10 hover:bg-theme-accent2/20 text-theme-accent2 px-2 py-1 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50"
                             >
                               <Sparkles className="w-3 h-3" /> {isSuggestingTags[book.id] ? 'Suggesting...' : 'Suggest Tags'}
                             </button>
@@ -815,11 +868,11 @@ export default function Library() {
                               {book.tags.map(tId => {
                                 const tag = tags.find(t => t.id === tId);
                                 return tag ? (
-                                  <span key={tId} className="text-xs px-2.5 py-1 rounded-md bg-earth-100 dark:bg-earth-800 text-earth-800 dark:text-earth-200 border border-earth-200 dark:border-earth-700 flex items-center gap-1">
+                                  <span key={tId} className="text-xs px-2.5 py-1 rounded-md bg-theme-bg text-theme-text border border-theme-border flex items-center gap-1">
                                     {tag.name}
                                     <button 
                                       onClick={() => updateBook(book.id, { tags: book.tags.filter(id => id !== tId) })}
-                                      className="text-earth-500 hover:text-red-400 ml-1"
+                                      className="text-theme-text-secondary hover:text-theme-danger ml-1"
                                     >
                                       <XCircle className="w-3 h-3" />
                                     </button>
@@ -828,12 +881,12 @@ export default function Library() {
                               })}
                             </div>
                           ) : (
-                            <p className="text-sm text-earth-500 italic mb-3">No tags added yet.</p>
+                            <p className="text-sm text-theme-text-secondary italic mb-3">No tags added yet.</p>
                           )}
 
                           <div className="mb-4">
                             <select
-                              className="w-full bg-earth-50 dark:bg-earth-900 border border-earth-200 dark:border-earth-800 rounded-lg px-3 py-2 text-sm text-earth-800 dark:text-earth-200 focus:outline-none focus:border-sage-500/50"
+                              className="w-full bg-theme-bg border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text focus:outline-none focus:border-theme-accent2/50"
                               onChange={(e) => {
                                 handleAddExistingTag(book.id, e.target.value);
                                 e.target.value = "";
@@ -848,26 +901,26 @@ export default function Library() {
                           </div>
 
                           {suggestedTags[book.id] && Object.keys(suggestedTags[book.id]).length > 0 && (
-                            <div className="bg-earth-100/50 dark:bg-earth-900/50 rounded-xl p-3 border border-sage-500/20">
-                              <h6 className="text-xs font-semibold text-sage-600 dark:text-sage-400 mb-3">AI Suggestions (Click to add, X to block)</h6>
+                            <div className="bg-theme-bg rounded-xl p-3 border border-theme-accent2/20">
+                              <h6 className="text-xs font-semibold text-theme-accent2 mb-3">AI Suggestions (Click to add, X to block)</h6>
                               <div className="flex flex-col gap-4">
                                 {Object.entries(suggestedTags[book.id]).map(([category, tags]) => {
                                   if (!tags || tags.length === 0) return null;
                                   return (
                                     <div key={category} className="space-y-1.5">
-                                      <h6 className="text-[10px] font-bold text-earth-500 uppercase tracking-widest">{category}</h6>
+                                      <h6 className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-widest">{category}</h6>
                                       <div className="flex flex-wrap gap-1.5">
                                         {tags.map(suggestion => (
-                                          <div key={suggestion} className="flex items-center justify-between bg-white dark:bg-earth-900 px-2 py-1 rounded-lg border border-earth-200 dark:border-earth-800">
+                                          <div key={suggestion} className="flex items-center justify-between bg-theme-surface px-2 py-1 rounded-lg border border-theme-border">
                                             <button 
                                               onClick={() => handleAddTagToBook(book.id, suggestion, category)}
-                                              className="text-xs text-earth-700 dark:text-earth-300 hover:text-sage-600 dark:hover:text-sage-400 text-left flex-1"
+                                              className="text-xs text-theme-text-secondary hover:text-theme-accent2 dark:hover:text-theme-accent2 text-left flex-1"
                                             >
                                               + {suggestion}
                                             </button>
                                             <button 
                                               onClick={() => handleBlockSuggestedTag(book.id, suggestion, category)}
-                                              className="text-earth-400 hover:text-red-400 ml-2 p-0.5"
+                                              className="text-theme-text-secondary hover:text-theme-danger ml-2 p-0.5"
                                               title="Dismiss suggestion"
                                             >
                                               <XCircle className="w-3 h-3" />
@@ -884,13 +937,13 @@ export default function Library() {
                         </div>
 
                         {/* Notes & Tasks */}
-                        <div className="mt-6 pt-6 border-t border-earth-200 dark:border-earth-800">
-                          <h5 className="text-xs font-bold text-sage-600 dark:text-sage-400 uppercase tracking-wider mb-2">Notes & Tasks</h5>
+                        <div className="mt-6 pt-6 border-t border-theme-border">
+                          <h5 className="text-xs font-bold text-theme-accent2 uppercase tracking-wider mb-2">Notes & Tasks</h5>
                           <textarea
                             value={book.notes || ''}
                             onChange={(e) => updateBook(book.id, { notes: e.target.value })}
                             placeholder="Add custom tasks, reading notes, or thoughts here..."
-                            className="w-full bg-earth-100/50 dark:bg-earth-900/50 border border-earth-200 dark:border-earth-800 rounded-xl p-3 text-sm text-earth-800 dark:text-earth-200 focus:outline-none focus:border-sage-500/50 min-h-[100px] resize-y"
+                            className="w-full bg-theme-bg border border-theme-border rounded-xl p-3 text-sm text-theme-text focus:outline-none focus:border-theme-accent2/50 min-h-[100px] resize-y"
                           />
                         </div>
                         </div>

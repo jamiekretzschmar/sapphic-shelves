@@ -23,7 +23,7 @@ export const Recommendations: React.FC<RecommendationsProps> = ({ followedAuthor
   }, [followedAuthors, readBooks]);
 
   if (loading) return (
-    <div className="p-8 flex flex-col items-center justify-center text-earth-500 italic space-y-4">
+    <div className="p-8 flex flex-col items-center justify-center text-theme-text-secondary italic space-y-4">
       <LogoLoader size={48} />
       <span>Finding your next favorite read...</span>
     </div>
@@ -32,8 +32,8 @@ export const Recommendations: React.FC<RecommendationsProps> = ({ followedAuthor
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-serif text-earth-800 dark:text-earth-100 flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-mustard-500" /> Recommended for You
+      <h3 className="text-xl font-serif text-theme-text flex items-center gap-2">
+        <Sparkles className="w-5 h-5 text-theme-accent1" /> Recommended for You
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {recommendations.map((book, index) => (
@@ -42,17 +42,21 @@ export const Recommendations: React.FC<RecommendationsProps> = ({ followedAuthor
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-earth-50 dark:bg-earth-900 p-4 rounded-xl border border-earth-200 dark:border-earth-800"
+            className={`p-4 rounded-xl border border-theme-border ${
+              index % 3 === 0 ? 'bg-theme-card-blue' : 
+              index % 3 === 1 ? 'bg-theme-card-yellow' : 
+              'bg-theme-card-olive'
+            }`}
           >
             <div className="flex items-start gap-3">
               {book.coverUrl && <img src={book.coverUrl} alt={book.title} className="w-16 h-24 object-cover rounded shadow-sm" referrerPolicy="no-referrer" />}
               <div>
-                <h4 className="font-bold text-earth-900 dark:text-earth-100">{book.title}</h4>
-                <p className="text-sm text-earth-600 dark:text-earth-400">{book.author}</p>
-                <p className="text-xs text-earth-500 mt-1">{book.genre} • {book.publicationYear}</p>
+                <h4 className="font-bold text-theme-text">{book.title}</h4>
+                <p className="text-sm text-theme-text-secondary">{book.author}</p>
+                <p className="text-xs text-theme-text-secondary mt-1">{book.genre} • {book.publicationYear}</p>
               </div>
             </div>
-            <p className="text-sm text-earth-700 dark:text-earth-300 mt-3 line-clamp-3">{book.description}</p>
+            <p className="text-sm text-theme-text-secondary mt-3 line-clamp-3">{book.description}</p>
           </motion.div>
         ))}
       </div>

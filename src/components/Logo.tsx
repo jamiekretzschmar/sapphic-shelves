@@ -36,20 +36,7 @@ export default function Logo({ isLoading = false, className = "", size = 32 }: L
           </linearGradient>
         </defs>
 
-        {/* Outer Ring */}
-        <motion.circle
-          cx="50"
-          cy="50"
-          r="40"
-          stroke="url(#maroon-foil)"
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray={isLoading ? "180 80" : "252 0"}
-          fill="none"
-          animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
-          transition={isLoading ? { duration: 1.5, repeat: Infinity, ease: "linear" } : { duration: 0.8, ease: "easeOut" }}
-          style={{ originX: "50px", originY: "50px" }}
-        />
+      
 
         {/* Inner S / Bookshelf */}
         <motion.path
@@ -74,15 +61,7 @@ export default function Logo({ isLoading = false, className = "", size = 32 }: L
           transition={isLoading ? { duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 } : { duration: 0.8, ease: "easeOut" }}
           style={{ originX: "35px", originY: "35px" }}
         />
-        <motion.circle
-          cx="65"
-          cy="65"
-          r="5"
-          fill="#D92B5A"
-          animate={isLoading ? { scale: [1, 0, 1], opacity: [1, 0, 1] } : { scale: 1, opacity: 1 }}
-          transition={isLoading ? { duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.4 } : { duration: 0.8, ease: "easeOut" }}
-          style={{ originX: "65px", originY: "65px" }}
-        />
+      
       </svg>
     </motion.div>
   );

@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { fetchBookCover } from './coverService';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -163,7 +163,7 @@ export const searchForNovels = async (query: string): Promise<DiscoveredBook[]> 
 export const findLocalBookstores = async (location: string): Promise<any> => {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-flash-preview",
       contents: `Find good local bookstores near ${location} that might carry queer or sapphic literature.`,
       config: {
         tools: [{ googleMaps: {} }],
@@ -183,7 +183,7 @@ export const findLocalBookstores = async (location: string): Promise<any> => {
 export const analyzeBookshelf = async (base64Data: string, mimeType: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-flash-preview",
       contents: {
         parts: [
           { inlineData: { data: base64Data, mimeType } },
@@ -218,7 +218,7 @@ export const checkUpcomingReleases = async (authorName: string, currentDate: str
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Search for upcoming book releases by the author "${authorName}" that are scheduled to be published AFTER ${currentDate}. 
+      contents: `Search for recent (published within the last 30 days) or upcoming (published after ${currentDate}) book releases by the author "${authorName}". 
       Return ONLY a JSON object with this structure:
       {
         "hasUpcoming": true/false,
@@ -226,7 +226,7 @@ export const checkUpcomingReleases = async (authorName: string, currentDate: str
           { "title": "Book Title", "year": 2026, "releaseDate": "YYYY-MM-DD", "description": "Short description..." }
         ]
       }
-      If there are no upcoming releases found, set hasUpcoming to false and newBooks to an empty array. Do not include markdown formatting outside the JSON object.`,
+      If there are no recent or upcoming releases found, set hasUpcoming to false and newBooks to an empty array. Do not include markdown formatting outside the JSON object.`,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
@@ -321,7 +321,7 @@ export const suggestBookTags = async (title: string, author: string, description
 export const analyzeBookshelfForIngestion = async (base64Data: string, mimeType: string): Promise<{ title: string, author: string, genre?: string, publicationYear?: number }[]> => {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-flash-preview",
       contents: {
         parts: [
           { inlineData: { data: base64Data, mimeType } },
@@ -350,18 +350,54 @@ export const analyzeBookshelfForIngestion = async (base64Data: string, mimeType:
   }
 };
 
-export const generateBookCover = async (title: string, author: string): Promise<string | null> => {
+export const analyzeImage = async (base64Data: string, mimeType: string, prompt: string = "Analyze this image"): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: "gemini-3.1-pro-preview",
       contents: {
         parts: [
-          { text: `A book cover for "${title}" by ${author}. High quality, professional book cover design, no text.` }
+          { inlineData: { data: base64Data, mimeType } },
+          { text: prompt }
+        ]
+      }
+    });
+    return response.text || "No analysis results.";
+  } catch (error) {
+    if (isQuotaError(error)) throw new QuotaExceededError();
+    console.error("Error analyzing image:", error);
+    return "An error occurred while analyzing the image.";
+  }
+};
+
+export const highThinkingQuery = async (query: string): Promise<string> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-pro-preview",
+      contents: query,
+      config: {
+        thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH }
+      }
+    });
+    return response.text || "No response generated.";
+  } catch (error) {
+    if (isQuotaError(error)) throw new QuotaExceededError();
+    console.error("Error in high thinking query:", error);
+    return "An error occurred during high-thinking analysis.";
+  }
+};
+
+export const generateBookCover = async (title: string, author: string, aspectRatio: string = "3:4"): Promise<string | null> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.1-flash-image-preview',
+      contents: {
+        parts: [
+          { text: `A professional book cover for "${title}" by ${author}. High quality, artistic design, no text.` }
         ]
       },
       config: {
         imageConfig: {
-          aspectRatio: "3:4",
+          aspectRatio: aspectRatio as any,
           imageSize: "1K"
         }
       }

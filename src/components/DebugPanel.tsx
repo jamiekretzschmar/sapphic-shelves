@@ -42,39 +42,39 @@ export default function DebugPanel() {
   }, []);
 
   return (
-    <div className="p-6 space-y-6 max-w-2xl mx-auto bg-slate-900/50 rounded-3xl border border-white/5 backdrop-blur-xl mt-10">
+    <div className="p-6 space-y-6 max-w-2xl mx-auto bg-theme-surface rounded-3xl border border-theme-border backdrop-blur-xl mt-10">
       <div className="flex items-center gap-3 mb-4">
-        <Terminal className="w-6 h-6 text-emerald-400" />
-        <h2 className="text-xl font-bold text-slate-100">Full-Stack Debug Panel</h2>
+        <Terminal className="w-6 h-6 text-theme-accent1" />
+        <h2 className="text-xl font-bold text-theme-text">Full-Stack Debug Panel</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Node Health */}
-        <div className="p-4 rounded-2xl bg-slate-950/50 border border-white/5">
-          <div className="flex items-center gap-2 mb-2 text-emerald-400">
+        <div className="p-4 rounded-2xl bg-theme-bg border border-theme-border">
+          <div className="flex items-center gap-2 mb-2 text-theme-accent1">
             <Server className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">Node Server</span>
           </div>
           {health ? (
             <div className="space-y-1">
-              <p className="text-sm text-slate-200">{health.message}</p>
-              <p className="text-[10px] text-slate-500 font-mono">Status: {health.status}</p>
+              <p className="text-sm text-theme-text-secondary">{health.message}</p>
+              <p className="text-[10px] text-theme-text-secondary font-mono">Status: {health.status}</p>
             </div>
           ) : (
-            <p className="text-sm text-slate-500 italic">Checking connectivity...</p>
+            <p className="text-sm text-theme-text-secondary italic">Checking connectivity...</p>
           )}
         </div>
 
         {/* Python Integration */}
-        <div className="p-4 rounded-2xl bg-slate-950/50 border border-white/5">
-          <div className="flex items-center gap-2 mb-2 text-blue-400">
+        <div className="p-4 rounded-2xl bg-theme-bg border border-theme-border">
+          <div className="flex items-center gap-2 mb-2 text-theme-accent2">
             <Code className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">Python Integration</span>
           </div>
           <button 
             onClick={runPython}
             disabled={loading}
-            className="w-full py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-slate-100 dark:text-white rounded-xl text-xs font-bold transition-all active:scale-95"
+            className="w-full py-2 bg-theme-accent2 hover:opacity-90 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all active:scale-95"
           >
             {loading ? "Processing..." : "Run Python Script"}
           </button>
@@ -83,19 +83,19 @@ export default function DebugPanel() {
 
       {/* Results */}
       {pythonResult && (
-        <div className="p-4 rounded-2xl bg-slate-950/50 border border-emerald-500/20 animate-in fade-in slide-in-from-bottom-4">
-          <div className="flex items-center gap-2 mb-2 text-emerald-400">
+        <div className="p-4 rounded-2xl bg-theme-bg border border-theme-accent1/20 animate-in fade-in slide-in-from-bottom-4">
+          <div className="flex items-center gap-2 mb-2 text-theme-accent1">
             <Activity className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-wider">Python Output</span>
           </div>
-          <pre className="text-[10px] text-emerald-300 font-mono bg-black/30 p-3 rounded-lg overflow-x-auto">
+          <pre className="text-[10px] text-theme-accent1 font-mono bg-black/10 p-3 rounded-lg overflow-x-auto">
             {JSON.stringify(pythonResult, null, 2)}
           </pre>
         </div>
       )}
 
       {error && (
-        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
+        <div className="p-4 rounded-2xl bg-theme-danger/10 border border-theme-danger/20 text-theme-danger text-xs">
           {error}
         </div>
       )}
