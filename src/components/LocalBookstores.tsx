@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MapPin, Loader2, Navigation } from 'lucide-react';
 import { findLocalBookstores } from '../services/gemini';
 import Markdown from 'react-markdown';
+import Logo from './Logo';
 
 export default function LocalBookstores() {
   const [location, setLocation] = useState('');
@@ -53,7 +54,7 @@ export default function LocalBookstores() {
             disabled={loading || !location.trim()}
             className="absolute right-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Find'}
+            {loading ? <Logo isLoading={true} size={20} /> : 'Find'}
           </button>
         </div>
       </form>

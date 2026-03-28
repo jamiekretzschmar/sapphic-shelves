@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, Loader2, Check } from 'lucide-react';
+import LogoLoader from './LogoLoader';
+import { Camera, Upload, Check, Loader2 } from 'lucide-react';
 import { analyzeBookshelfForIngestion, QuotaExceededError } from '../services/gemini';
 import { useLibrary } from '../context/LibraryContext';
 import { motion } from 'framer-motion';
@@ -161,7 +162,7 @@ export default function ShelfSync() {
                   <img src={result.preview} alt="Preview" className="w-full h-full object-cover" />
                   {result.status === 'processing' && (
                     <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] flex items-center justify-center">
-                      <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+                      <LogoLoader size={32} />
                     </div>
                   )}
                 </div>
@@ -179,7 +180,7 @@ export default function ShelfSync() {
                     {result.status === 'completed' ? (
                       <Check className="w-5 h-5 text-emerald-400" />
                     ) : result.status === 'processing' ? (
-                      <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                      <LogoLoader size={20} />
                     ) : result.status === 'quota-exceeded' ? (
                       <AlertTriangle className="w-5 h-5 text-amber-400" />
                     ) : (
@@ -191,7 +192,7 @@ export default function ShelfSync() {
                   {result.status === 'completed' && result.books && result.books.length > 0 && result.books.some(b => !isBookInLibrary(b.title, b.author)) && (
                     <button 
                       onClick={() => handleIngestAll(result.id)}
-                      className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                      className="bg-blue-600 hover:bg-blue-500 text-slate-100 dark:text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
                     >
                       Ingest All New
                     </button>

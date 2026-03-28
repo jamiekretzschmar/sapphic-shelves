@@ -1,14 +1,17 @@
 import React, { useRef, useState } from 'react';
-import { Settings as SettingsIcon, Download, Upload, Database, ShieldCheck, AlertTriangle, Github, Sun, Moon, Monitor, ExternalLink, RefreshCw } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Database, ShieldCheck, AlertTriangle, Github, Sun, Moon, Monitor, ExternalLink, RefreshCw, Plus, Minus, FileText, Trash2, X } from 'lucide-react';
 import { useLibrary, Theme } from '../context/LibraryContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Settings() {
-  const { exportData, importData, theme, setTheme, githubUser, loginGitHub, logoutGitHub, syncToGitHub } = useLibrary();
+  const { exportData, importData, theme, setTheme, githubUser, loginGitHub, logoutGitHub, syncToGitHub, goals, updateGoal, clearLibrary } = useLibrary();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
   const [importMode, setImportMode] = useState<'merge' | 'overwrite'>('merge');
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -53,14 +56,29 @@ export default function Settings() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleCsvImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // CSV import logic placeholder
+    setStatus({ type: 'error', message: 'CSV Import is not yet implemented.' });
+    if (csvInputRef.current) csvInputRef.current.value = '';
+  };
+
+  const handleDeleteLibrary = () => {
+    if (deleteConfirmText === 'DELETE') {
+      clearLibrary();
+      setShowDeleteModal(false);
+      setDeleteConfirmText('');
+      setStatus({ type: 'success', message: 'Library cleared successfully.' });
+    }
+  };
+
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
-      <div className="text-center space-y-4 mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-800/10 text-slate-500 mb-4">
+    <div className="space-y-8 max-w-3xl mx-auto pb-24">
+      <div className="text-center space-y-4 mb-12">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-earth-100 dark:bg-earth-800/50 text-earth-600 dark:text-earth-300 mb-4">
           <SettingsIcon className="w-8 h-8" />
         </div>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-100">Settings & Data</h2>
-        <p className="text-slate-400 max-w-xl mx-auto">
+        <h2 className="text-4xl font-serif text-earth-900 dark:text-earth-100">Settings & Data</h2>
+        <p className="text-earth-600 dark:text-earth-400 max-w-xl mx-auto">
           Personalize your experience and manage your local-first data.
         </p>
       </div>
@@ -69,69 +87,89 @@ export default function Settings() {
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`p-4 rounded-xl border ${status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'} flex items-center gap-3 font-medium`}
+          className={`p-4 rounded-2xl border ${status.type === 'success' ? 'bg-sage-50 dark:bg-sage-900/20 border-sage-200 dark:border-sage-800 text-sage-700 dark:text-sage-300' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'} flex items-center gap-3 font-medium mb-8`}
         >
           {status.type === 'success' ? <ShieldCheck className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
           {status.message}
         </motion.div>
       )}
 
-      <div className="grid gap-6">
-        {/* Theme Selection */}
-        <div className="bento-card">
-          <div className="flex items-start gap-4 mb-6">
-            <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500">
-              <Sun className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-slate-100">Appearance</h3>
-              <p className="text-slate-400 text-sm mt-1">Choose how Sapphic Shelves looks on your device.</p>
-            </div>
+      {/* Reading Goals */}
+      <section className="border-b border-earth-200 dark:border-earth-800 pb-10 mb-10">
+        <h3 className="text-2xl font-serif text-earth-900 dark:text-earth-100 mb-6">Reading Goals</h3>
+        <div className="bg-white dark:bg-earth-900/50 rounded-3xl p-8 shadow-soft border border-earth-100 dark:border-earth-800 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div>
+            <h4 className="text-lg font-bold text-earth-900 dark:text-earth-100">Yearly Target</h4>
+            <p className="text-earth-600 dark:text-earth-400 text-sm mt-1">How many books do you want to read in {goals.year}?</p>
           </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="flex items-center gap-6">
             <button 
-              onClick={() => setTheme('light')}
-              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${theme === 'light' ? 'bg-amber-500/10 border-amber-500/50 text-amber-600' : 'bg-slate-900/50 border-white/5 text-slate-400 hover:border-white/10'}`}
+              onClick={() => updateGoal({ ...goals, target: Math.max(1, goals.target - 1) })}
+              className="bg-earth-100 hover:bg-earth-200 dark:bg-earth-800 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 rounded-full w-12 h-12 flex items-center justify-center text-xl transition-colors"
             >
-              <Sun className="w-6 h-6" />
-              <span className="text-xs font-bold uppercase tracking-wider">Light</span>
+              <Minus className="w-5 h-5" />
             </button>
+            <div className="text-4xl font-serif text-earth-900 dark:text-earth-100 w-16 text-center">
+              {goals.target}
+            </div>
             <button 
-              onClick={() => setTheme('lettuce')}
-              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${theme === 'lettuce' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600' : 'bg-slate-900/50 border-white/5 text-slate-400 hover:border-white/10'}`}
+              onClick={() => updateGoal({ ...goals, target: goals.target + 1 })}
+              className="bg-earth-100 hover:bg-earth-200 dark:bg-earth-800 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 rounded-full w-12 h-12 flex items-center justify-center text-xl transition-colors"
             >
-              <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-emerald-500" />
-              </div>
-              <span className="text-xs font-bold uppercase tracking-wider">Lettuce</span>
-            </button>
-            <button 
-              onClick={() => setTheme('dark')}
-              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${theme === 'dark' ? 'bg-fuchsia-500/10 border-fuchsia-500/50 text-fuchsia-400' : 'bg-slate-900/50 border-white/5 text-slate-400 hover:border-white/10'}`}
-            >
-              <Moon className="w-6 h-6" />
-              <span className="text-xs font-bold uppercase tracking-wider">Dark</span>
-            </button>
-            <button 
-              onClick={() => setTheme('system')}
-              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${theme === 'system' ? 'bg-blue-500/10 border-blue-500/50 text-blue-400' : 'bg-slate-900/50 border-white/5 text-slate-400 hover:border-white/10'}`}
-            >
-              <Monitor className="w-6 h-6" />
-              <span className="text-xs font-bold uppercase tracking-wider">System</span>
+              <Plus className="w-5 h-5" />
             </button>
           </div>
         </div>
+      </section>
 
-        {/* GitHub Connection */}
-        <div className="bento-card">
+      {/* Appearance */}
+      <section className="border-b border-earth-200 dark:border-earth-800 pb-10 mb-10">
+        <h3 className="text-2xl font-serif text-earth-900 dark:text-earth-100 mb-6">Appearance</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <button 
+            onClick={() => setTheme('light')}
+            className={`flex flex-col items-center gap-3 p-6 rounded-3xl border-2 transition-all ${theme === 'light' ? 'bg-mustard-50 dark:bg-mustard-900/20 border-mustard-400 text-mustard-700 dark:text-mustard-400' : 'bg-white dark:bg-earth-900/50 border-earth-100 dark:border-earth-800 text-earth-600 dark:text-earth-400 hover:border-earth-300 dark:hover:border-earth-600'}`}
+          >
+            <Sun className="w-8 h-8" />
+            <span className="text-sm font-bold uppercase tracking-wider">Light</span>
+          </button>
+          <button 
+            onClick={() => setTheme('lettuce')}
+            className={`flex flex-col items-center gap-3 p-6 rounded-3xl border-2 transition-all ${theme === 'lettuce' ? 'bg-sage-50 dark:bg-sage-900/20 border-sage-400 text-sage-700 dark:text-sage-400' : 'bg-white dark:bg-earth-900/50 border-earth-100 dark:border-earth-800 text-earth-600 dark:text-earth-400 hover:border-earth-300 dark:hover:border-earth-600'}`}
+          >
+            <div className="w-8 h-8 rounded-full bg-sage-200 dark:bg-sage-800 flex items-center justify-center">
+              <div className="w-4 h-4 rounded-full bg-sage-500" />
+            </div>
+            <span className="text-sm font-bold uppercase tracking-wider">Lettuce</span>
+          </button>
+          <button 
+            onClick={() => setTheme('dark')}
+            className={`flex flex-col items-center gap-3 p-6 rounded-3xl border-2 transition-all ${theme === 'dark' ? 'bg-stone-800 border-stone-600 text-stone-200' : 'bg-white dark:bg-earth-900/50 border-earth-100 dark:border-earth-800 text-earth-600 dark:text-earth-400 hover:border-earth-300 dark:hover:border-earth-600'}`}
+          >
+            <Moon className="w-8 h-8" />
+            <span className="text-sm font-bold uppercase tracking-wider">Dark</span>
+          </button>
+          <button 
+            onClick={() => setTheme('system')}
+            className={`flex flex-col items-center gap-3 p-6 rounded-3xl border-2 transition-all ${theme === 'system' ? 'bg-earth-100 dark:bg-earth-800 border-earth-400 text-earth-800 dark:text-earth-200' : 'bg-white dark:bg-earth-900/50 border-earth-100 dark:border-earth-800 text-earth-600 dark:text-earth-400 hover:border-earth-300 dark:hover:border-earth-600'}`}
+          >
+            <Monitor className="w-8 h-8" />
+            <span className="text-sm font-bold uppercase tracking-wider">System</span>
+          </button>
+        </div>
+      </section>
+
+      {/* GitHub Connection */}
+      <section className="border-b border-earth-200 dark:border-earth-800 pb-10 mb-10">
+        <h3 className="text-2xl font-serif text-earth-900 dark:text-earth-100 mb-6">Cloud Sync</h3>
+        <div className="bg-white dark:bg-earth-900/50 rounded-3xl p-8 shadow-soft border border-earth-100 dark:border-earth-800">
           <div className="flex items-start gap-4 mb-6">
-            <div className={`p-3 rounded-2xl ${githubUser ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-800/50 text-slate-400'}`}>
+            <div className={`p-4 rounded-2xl ${githubUser ? 'bg-sage-100 dark:bg-sage-900/40 text-sage-600 dark:text-sage-400' : 'bg-earth-100 dark:bg-earth-800 text-earth-600 dark:text-earth-400'}`}>
               <Github className="w-6 h-6" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-slate-100">GitHub Connection</h3>
-              <p className="text-slate-400 text-sm mt-1">
+              <h4 className="text-lg font-bold text-earth-900 dark:text-earth-100">GitHub Connection</h4>
+              <p className="text-earth-600 dark:text-earth-400 text-sm mt-1">
                 {githubUser 
                   ? `Connected as ${githubUser.login}` 
                   : 'Connect your GitHub account to sync your library across devices.'}
@@ -140,7 +178,7 @@ export default function Settings() {
             {githubUser && (
               <button 
                 onClick={logoutGitHub}
-                className="text-xs font-bold uppercase tracking-widest text-rose-400 hover:text-rose-300 transition-colors"
+                className="text-xs font-bold uppercase tracking-widest text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors"
               >
                 Disconnect
               </button>
@@ -149,17 +187,17 @@ export default function Settings() {
           
           {githubUser ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-950/50 border border-white/5">
-                <img src={githubUser.avatar_url} alt="" className="w-12 h-12 rounded-full border-2 border-emerald-500/30" />
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-earth-50 dark:bg-earth-800/50 border border-earth-200 dark:border-earth-700">
+                <img src={githubUser.avatar_url} alt="" className="w-12 h-12 rounded-full border-2 border-sage-500/30" />
                 <div>
-                  <p className="font-bold text-slate-100">{githubUser.name || githubUser.login}</p>
-                  <p className="text-xs text-slate-500">@{githubUser.login}</p>
+                  <p className="font-bold text-earth-900 dark:text-earth-100">{githubUser.name || githubUser.login}</p>
+                  <p className="text-xs text-earth-500 dark:text-earth-400">@{githubUser.login}</p>
                 </div>
               </div>
               <button 
                 onClick={handleSync}
                 disabled={isSyncing}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-4 rounded-2xl font-medium transition-all flex items-center justify-center gap-3 group active:scale-95"
+                className="w-full bg-sage-600 hover:bg-sage-700 disabled:opacity-50 text-white px-6 py-4 rounded-full font-medium transition-all flex items-center justify-center gap-3 group active:scale-95 shadow-soft"
               >
                 <RefreshCw className={`w-5 h-5 ${isSyncing ? 'animate-spin' : 'group-hover:rotate-180'} transition-transform duration-500`} />
                 <span>{isSyncing ? 'Syncing...' : 'Sync Library to GitHub'}</span>
@@ -168,60 +206,63 @@ export default function Settings() {
           ) : (
             <button 
               onClick={loginGitHub}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-2xl font-medium transition-all flex items-center justify-between group active:scale-95"
+              className="w-full bg-earth-800 hover:bg-earth-900 dark:bg-earth-100 dark:hover:bg-white text-white dark:text-earth-900 px-6 py-4 rounded-full font-medium transition-all flex items-center justify-center gap-3 group active:scale-95 shadow-soft"
             >
-              <div className="flex items-center gap-3">
-                <Github className="w-5 h-5" />
-                <span>Connect GitHub Account</span>
-              </div>
-              <ExternalLink className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+              <Github className="w-5 h-5" />
+              <span>Connect GitHub Account</span>
+              <ExternalLink className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity ml-2" />
             </button>
           )}
         </div>
+      </section>
 
-        {/* Data Management */}
+      {/* Data Management */}
+      <section className="border-b border-earth-200 dark:border-earth-800 pb-10 mb-10">
+        <h3 className="text-2xl font-serif text-earth-900 dark:text-earth-100 mb-6">Data Management</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bento-card">
+          <div className="bg-white dark:bg-earth-900/50 rounded-3xl p-8 shadow-soft border border-earth-100 dark:border-earth-800 flex flex-col">
             <div className="flex items-start gap-4 mb-6">
-              <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-400">
+              <div className="p-4 bg-mustard-100 dark:bg-mustard-900/40 rounded-2xl text-mustard-700 dark:text-mustard-400">
                 <Download className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-100">Export</h3>
-                <p className="text-slate-400 text-xs mt-1">Download your library as JSON.</p>
+                <h4 className="text-lg font-bold text-earth-900 dark:text-earth-100">Backup Data</h4>
+                <p className="text-earth-600 dark:text-earth-400 text-sm mt-1">Download your entire library, tags, and authors as a JSON file.</p>
               </div>
             </div>
-            <button 
-              onClick={handleExport}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm"
-            >
-              <Database className="w-4 h-4" />
-              Export Library
-            </button>
+            <div className="mt-auto">
+              <button 
+                onClick={handleExport}
+                className="w-full bg-sage-600 hover:bg-sage-700 text-white px-6 py-3 rounded-full font-medium transition-colors flex items-center justify-center gap-2 shadow-soft"
+              >
+                <Database className="w-5 h-5" />
+                Download Backup (JSON)
+              </button>
+            </div>
           </div>
 
-          <div className="bento-card">
+          <div className="bg-white dark:bg-earth-900/50 rounded-3xl p-8 shadow-soft border border-earth-100 dark:border-earth-800 flex flex-col">
             <div className="flex items-start gap-4 mb-6">
-              <div className="p-3 bg-fuchsia-500/10 rounded-2xl text-fuchsia-400">
+              <div className="p-4 bg-earth-100 dark:bg-earth-800 rounded-2xl text-earth-700 dark:text-earth-300">
                 <Upload className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-100">Import</h3>
-                <p className="text-slate-400 text-xs mt-1">Restore from backup.</p>
+                <h4 className="text-lg font-bold text-earth-900 dark:text-earth-100">Restore & Import</h4>
+                <p className="text-earth-600 dark:text-earth-400 text-sm mt-1">Restore from a backup or import from other platforms.</p>
               </div>
             </div>
             
-            <div className="space-y-3">
-              <div className="flex gap-2 p-1 bg-slate-950 rounded-lg border border-white/5">
+            <div className="mt-auto space-y-4">
+              <div className="flex gap-2 p-1 bg-earth-50 dark:bg-earth-800/50 rounded-xl border border-earth-200 dark:border-earth-700">
                 <button 
                   onClick={() => setImportMode('merge')}
-                  className={`flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors ${importMode === 'merge' ? 'bg-slate-800 text-slate-200 shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${importMode === 'merge' ? 'bg-white dark:bg-earth-700 text-earth-900 dark:text-earth-100 shadow-sm' : 'text-earth-500 hover:text-earth-700 dark:hover:text-earth-300'}`}
                 >
                   Merge
                 </button>
                 <button 
                   onClick={() => setImportMode('overwrite')}
-                  className={`flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors ${importMode === 'overwrite' ? 'bg-rose-500/20 text-rose-400 shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${importMode === 'overwrite' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 shadow-sm' : 'text-earth-500 hover:text-earth-700 dark:hover:text-earth-300'}`}
                 >
                   Overwrite
                 </button>
@@ -236,15 +277,105 @@ export default function Settings() {
               />
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full bg-fuchsia-600 hover:bg-fuchsia-500 text-white px-4 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm"
+                className="w-full bg-earth-100 hover:bg-earth-200 dark:bg-earth-800 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 px-4 py-3 rounded-full font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <Upload className="w-4 h-4" />
-                Import File
+                Restore from Backup
+              </button>
+
+              <input 
+                type="file" 
+                accept=".csv" 
+                className="hidden" 
+                ref={csvInputRef}
+                onChange={handleCsvImport}
+              />
+              <button 
+                onClick={() => csvInputRef.current?.click()}
+                className="w-full bg-earth-100 hover:bg-earth-200 dark:bg-earth-800 dark:hover:bg-earth-700 text-earth-800 dark:text-earth-200 px-4 py-3 rounded-full font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                Import from CSV
               </button>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Danger Zone */}
+      <section>
+        <h3 className="text-2xl font-serif text-red-800 dark:text-red-400 mb-6 flex items-center gap-2">
+          <AlertTriangle className="w-6 h-6" />
+          Danger Zone
+        </h3>
+        <div className="bg-red-50/50 dark:bg-red-950/20 rounded-3xl p-8 border border-red-200 dark:border-red-900/50 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div>
+            <h4 className="text-lg font-bold text-red-900 dark:text-red-300">Clear All Library Data</h4>
+            <p className="text-red-700 dark:text-red-400/80 text-sm mt-1">This will permanently delete all books, tags, authors, and goals from your local storage.</p>
+          </div>
+          <button 
+            onClick={() => setShowDeleteModal(true)}
+            className="shrink-0 bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 px-6 py-3 rounded-full font-bold transition-colors flex items-center gap-2"
+          >
+            <Trash2 className="w-5 h-5" />
+            Clear Library
+          </button>
+        </div>
+      </section>
+
+      {/* Custom Delete Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-earth-900/40 dark:bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-earth-900 rounded-3xl p-8 max-w-md w-full shadow-vibe border border-red-100 dark:border-red-900/30"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <button 
+                  onClick={() => setShowDeleteModal(false)}
+                  className="p-2 text-earth-400 hover:text-earth-600 dark:hover:text-earth-300 rounded-full hover:bg-earth-100 dark:hover:bg-earth-800 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <h3 className="text-2xl font-serif text-earth-900 dark:text-earth-100 mb-2">Are you absolutely sure?</h3>
+              <p className="text-earth-600 dark:text-earth-400 mb-6">
+                This action cannot be undone. This will permanently delete your entire library, all tags, and author data from this device.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-2">
+                    Please type <span className="font-bold text-red-600 dark:text-red-400">DELETE</span> to confirm.
+                  </label>
+                  <input 
+                    type="text" 
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    className="w-full bg-earth-50 dark:bg-earth-950 border border-earth-200 dark:border-earth-800 rounded-xl px-4 py-3 text-earth-900 dark:text-earth-100 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                    placeholder="DELETE"
+                  />
+                </div>
+                
+                <button 
+                  onClick={handleDeleteLibrary}
+                  disabled={deleteConfirmText !== 'DELETE'}
+                  className="w-full bg-red-600 hover:bg-red-700 disabled:bg-earth-200 dark:disabled:bg-earth-800 disabled:text-earth-400 dark:disabled:text-earth-600 text-white px-6 py-4 rounded-full font-bold transition-all"
+                >
+                  I understand, delete everything
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

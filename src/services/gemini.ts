@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { fetchBookCover } from './coverService';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -249,27 +250,36 @@ export const enrichBookData = async (title: string, author: string): Promise<{ c
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Find a high-quality book cover URL, a short description, the publication year, and the primary genre for the book "${title}" by ${author}. 
+      contents: `Find the ISBN (10 or 13), a short description, the publication year, and the primary genre for the book "${title}" by ${author}. 
       Return ONLY a JSON object with this structure:
       {
-        "coverUrl": "https://example.com/image.jpg",
+        "isbn": "ISBN-10 or ISBN-13",
         "description": "A short description...",
         "publicationYear": 2023,
         "genre": "Fantasy"
       }
-      If you cannot find a specific, accurate cover URL, set it to null.
-      Prefer OpenLibrary (https://covers.openlibrary.org/b/title/{title}-{author}-L.jpg) or direct image links from reliable sources.`,
+      If you cannot find the ISBN, set it to null.`,
       config: {
-        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
       },
     });
     const text = response.text || "{}";
+    let data;
     try {
-      return parseJson(text);
+      data = parseJson(text);
     } catch (parseError) {
       console.error("Failed to parse enriched book JSON:", parseError, text);
       return {};
     }
+
+    const coverUrl = await fetchBookCover(title, author, data.isbn);
+
+    return {
+      coverUrl: coverUrl || undefined,
+      description: data.description,
+      publicationYear: data.publicationYear,
+      genre: data.genre
+    };
   } catch (error) {
     if (isQuotaError(error)) throw new QuotaExceededError();
     console.error("Error enriching book:", error);
@@ -381,5 +391,43 @@ export const findResources = async (): Promise<string> => {
     if (isQuotaError(error)) throw new QuotaExceededError();
     console.error("Error finding resources:", error);
     return "An error occurred while fetching resources.";
+  }
+};
+
+export const getRecommendations = async (followedAuthors: string[], readBooks: DiscoveredBook[]): Promise<DiscoveredBook[]> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Based on the user's followed authors: ${followedAuthors.join(', ')} and previously read books: ${readBooks.map(b => b.title).join(', ')}, suggest 5 new sapphic/queer novels they might enjoy.
+      
+      Return ONLY a JSON array of objects with this structure:
+      [
+        {
+          "title": "Book Title",
+          "author": "Author Name",
+          "description": "Short description...",
+          "coverUrl": "...",
+          "releaseDate": "YYYY-MM-DD",
+          "genre": "...",
+          "publicationYear": 2024,
+          "rating": 4.5
+        }
+      ]
+      Do not include markdown formatting outside the JSON object.`,
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
+    const text = response.text || "[]";
+    try {
+      return parseJson(text);
+    } catch (parseError) {
+      console.error("Failed to parse recommendations JSON:", parseError, text);
+      return [];
+    }
+  } catch (error) {
+    if (isQuotaError(error)) throw new QuotaExceededError();
+    console.error("Error getting recommendations:", error);
+    return [];
   }
 };

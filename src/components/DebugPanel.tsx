@@ -74,7 +74,7 @@ export default function DebugPanel() {
           <button 
             onClick={runPython}
             disabled={loading}
-            className="w-full py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all active:scale-95"
+            className="w-full py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-slate-100 dark:text-white rounded-xl text-xs font-bold transition-all active:scale-95"
           >
             {loading ? "Processing..." : "Run Python Script"}
           </button>

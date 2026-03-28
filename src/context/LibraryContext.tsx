@@ -75,6 +75,7 @@ interface LibraryContextType {
   removeAuthor: (id: string) => void;
   exportData: () => string;
   importData: (jsonString: string, merge: boolean) => void;
+  clearLibrary: () => void;
 }
 
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
@@ -337,6 +338,13 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
     setAuthors(prev => prev.filter(a => a.id !== id));
   };
 
+  const clearLibrary = () => {
+    setBooks([]);
+    setTags([]);
+    setAuthors([]);
+    setGoals({ target: 50, year: new Date().getFullYear() });
+  };
+
   const exportData = () => {
     return JSON.stringify({ books, tags, goals, authors });
   };
@@ -369,7 +377,7 @@ export const LibraryProvider = ({ children }: { children: ReactNode }) => {
       addTag, renameTag, updateTagCategory, markTagUsed, deleteTag, reorderTags, updateGoal,
       addTask, updateTask, removeTask,
       addAuthor, updateAuthor, removeAuthor,
-      exportData, importData
+      exportData, importData, clearLibrary
     }}>
       {children}
     </LibraryContext.Provider>

@@ -4,6 +4,7 @@ import { Author, searchForAuthor, getAuthorPulse, checkUpcomingReleases, QuotaEx
 import { motion, AnimatePresence } from 'framer-motion';
 import Markdown from 'react-markdown';
 import { useLibrary } from '../context/LibraryContext';
+import Logo from './Logo';
 
 export default function MyAuthors() {
   const { authors, addAuthor, removeAuthor, updateAuthor, addTask, updateTask, books, addBook } = useLibrary();
@@ -344,7 +345,7 @@ export default function MyAuthors() {
             disabled={loading || !query.trim()}
             className="w-full bg-fuchsia-600 hover:bg-fuchsia-500 active:scale-[0.98] text-white px-6 py-4 rounded-2xl font-medium flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-fuchsia-500/25"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+            {loading ? <Logo isLoading={true} size={20} /> : <Plus className="w-5 h-5" />}
             <span>Track Author</span>
           </button>
         </form>
@@ -524,7 +525,7 @@ export default function MyAuthors() {
                       <div className="p-6 space-y-6">
                         {loadingAuthorId === author.id ? (
                           <div className="flex flex-col items-center justify-center py-8 text-slate-400 space-y-3">
-                            <Loader2 className="w-8 h-8 animate-spin text-fuchsia-500" />
+                            <Logo isLoading={true} size={32} />
                             <p className="text-sm">Retrieving archival details...</p>
                           </div>
                         ) : (

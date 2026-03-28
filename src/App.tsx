@@ -12,6 +12,7 @@ import Settings from './components/Settings';
 import TaskHub from './components/TaskHub';
 import ErrorBoundary from './components/ErrorBoundary';
 import DebugPanel from './components/DebugPanel';
+import Logo from './components/Logo';
 import { LibraryProvider } from './context/LibraryContext';
 
 type Tab = 'dashboard' | 'library' | 'authors' | 'lexicon' | 'discovery' | 'sync' | 'settings' | 'debug';
@@ -19,6 +20,7 @@ type Tab = 'dashboard' | 'library' | 'authors' | 'lexicon' | 'discovery' | 'sync
 function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isCmdPaletteOpen, setIsCmdPaletteOpen] = useState(false);
+  const [isLogoLoading, setIsLogoLoading] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -50,11 +52,15 @@ function AppContent() {
         
         {/* Mobile Header */}
         <header className="relative z-40 pt-safe mt-4 px-6 pb-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 text-fuchsia-400">
-            <div className="p-2.5 bg-white/50 rounded-2xl shadow-sm border border-white/60">
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-100">Sapphic Shelves</h1>
+          <div className="flex items-center gap-3 text-[#5A0A18]">
+            <button 
+              onClick={() => setIsLogoLoading(!isLogoLoading)}
+              className="p-1.5 bg-white/50 rounded-2xl shadow-sm border border-white/60 hover:bg-white/80 transition-colors active:scale-95"
+              aria-label="Toggle loading state"
+            >
+              <Logo isLoading={isLogoLoading} size={28} />
+            </button>
+            <h1 className="text-xl font-bold tracking-tight text-stone-800">Sapphic Shelves</h1>
           </div>
           <button 
             onClick={() => setIsCmdPaletteOpen(true)}

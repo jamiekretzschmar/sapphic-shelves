@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Activity, X, CheckCircle2, AlertCircle, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
+import LogoLoader from './LogoLoader';
+import { Activity, X, CheckCircle2, AlertCircle, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { useLibrary } from '../context/LibraryContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -34,7 +35,7 @@ export default function TaskHub() {
               {tasks.map(task => (
                 <div key={task.id} className="p-3 bg-white/30 rounded-xl border border-white/20 flex items-start gap-3">
                   <div className="mt-0.5">
-                    {task.status === 'processing' && <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />}
+                    {task.status === 'processing' && <LogoLoader size={16} />}
                     {task.status === 'pending' && <Activity className="w-4 h-4 text-slate-500" />}
                     {task.status === 'completed' && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                     {task.status === 'failed' && <AlertCircle className="w-4 h-4 text-rose-400" />}

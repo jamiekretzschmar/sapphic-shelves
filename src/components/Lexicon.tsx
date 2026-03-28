@@ -214,7 +214,7 @@ export default function Lexicon() {
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          <button type="submit" disabled={!newTag.trim()} className="bg-fuchsia-400 hover:bg-fuchsia-500 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-md active:scale-95 whitespace-nowrap border border-fuchsia-500/20">
+          <button type="submit" disabled={!newTag.trim()} className="bg-fuchsia-400 hover:bg-fuchsia-500 disabled:opacity-50 text-slate-100 dark:text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-md active:scale-95 whitespace-nowrap border border-fuchsia-500/20">
             <Plus className="w-5 h-5" /> Add Tag
           </button>
         </form>
@@ -253,7 +253,7 @@ export default function Lexicon() {
       <div className="overflow-x-auto custom-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
         <div className="flex items-center gap-2 min-w-max">
           {tabs.map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab as any)} className={`px-5 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all border ${activeTab === tab ? 'bg-fuchsia-400 text-white border-fuchsia-400 shadow-md' : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-900'}`}>
+            <button key={tab} onClick={() => setActiveTab(tab as any)} className={`px-5 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all border ${activeTab === tab ? 'bg-fuchsia-400 text-slate-100 dark:text-white border-fuchsia-400 shadow-md' : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-900'}`}>
               {tab === 'Recent' ? <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> Recent</span> : tab}
             </button>
           ))}

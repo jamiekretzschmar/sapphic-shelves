@@ -4,6 +4,7 @@ import { searchForNovels, suggestBookTags, DiscoveredBook, QuotaExceededError } 
 import { useLibrary, BookStatus, TagCategory } from '../context/LibraryContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import BookCover from './BookCover';
+import Logo from './Logo';
 
 type TropeState = 'neutral' | 'include' | 'exclude';
 interface Trope {
@@ -501,7 +502,7 @@ export default function SearchNovels() {
             disabled={loading || (!query.trim() && tropes.filter(t => t.state !== 'neutral').length === 0 && releaseFilter === 'all' && minRating === 0)}
             className="w-full bg-fuchsia-400 hover:bg-fuchsia-500 active:scale-[0.98] text-white px-6 py-4 rounded-xl font-bold text-lg transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2 shadow-md mt-6 border border-fuchsia-500/20"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <> <Sparkles className="w-5 h-5" /> Get Book Recommendations </>}
+            {loading ? <Logo isLoading={true} size={24} /> : <> <Sparkles className="w-5 h-5" /> Get Book Recommendations </>}
           </button>
         </div>
       </motion.form>
